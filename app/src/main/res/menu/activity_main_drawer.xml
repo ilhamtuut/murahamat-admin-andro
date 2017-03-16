@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_input"
+            android:icon="@drawable/ic_menu_input"
+            android:title="Input Barang" />
+        <item
+            android:id="@+id/nav_kategori"
+            android:icon="@drawable/ic_menu_input"
+            android:title="Kategori" />
+        <item
+            android:id="@+id/nav_promo"
+            android:icon="@drawable/ic_menu_promo"
+            android:title="Promo" />
+        <item
+            android:id="@+id/nav_testimonial"
+            android:icon="@drawable/ic_menu_testimonial"
+            android:title="Testimonial" />
+        <item
+            android:id="@+id/nav_transaksi"
+            android:icon="@drawable/ic_menu_tansaksi"
+            android:title="Riwayat Transaksi" />
+        <item
+            android:id="@+id/nav_usermanage"
+            android:icon="@drawable/ic_menu_usermanage"
+            android:title="User Management" />
+    </group>
+
+</menu>
