@@ -13,11 +13,8 @@ public class SharedPreManager {
 
     public static final String SHARED_PRE_NAME = "mysharedpref12";
     public static final String KEY_ID = "id";
-    public static final String KEY_NAMA = "nama";
     public static final String KEY_USERNAME = "username";
-    public static final String KEY_NOTELP = "notelp";
-    public static  final String KEY_LOGIN="1";
-//    public static final String KEY_PASS = "password";
+    public static final String KEY_LEVEL = "level";
 
     private SharedPreManager(Context context) {
         mCtx = context;
@@ -30,15 +27,13 @@ public class SharedPreManager {
         return mInstance;
     }
 
-    public boolean userLogin(int id, String nama, String username, String notelp, String key_login){
+    public boolean userLogin(int id, String username, String level){
         SharedPreferences sharedPreferences = mCtx.getSharedPreferences(SHARED_PRE_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         editor.putInt(KEY_ID,id);
-        editor.putString(KEY_NAMA,nama);
         editor.putString(KEY_USERNAME,username);
-        editor.putString(KEY_NOTELP,notelp);
-        editor.putString(KEY_LOGIN,key_login);
+        editor.putString(KEY_LEVEL,level);
         editor.apply();
         return true;
     }
@@ -60,31 +55,14 @@ public class SharedPreManager {
         return true;
     }
 
-    public String getKeyLogin() {
-        return KEY_LOGIN;
-    }
-
-    public String getNama(){
-        SharedPreferences sharedPreferences = mCtx.getSharedPreferences(SHARED_PRE_NAME, Context.MODE_PRIVATE);
-        return sharedPreferences.getString(KEY_NAMA, null);
-    }
-
     public String getUsername(){
         SharedPreferences sharedPreferences = mCtx.getSharedPreferences(SHARED_PRE_NAME, Context.MODE_PRIVATE);
         return sharedPreferences.getString(KEY_USERNAME, null);
     }
 
-    public String getNotelp(){
+    public String getLevel(){
         SharedPreferences sharedPreferences = mCtx.getSharedPreferences(SHARED_PRE_NAME, Context.MODE_PRIVATE);
-        return sharedPreferences.getString(KEY_NOTELP, null);
+        return sharedPreferences.getString(KEY_LEVEL, null);
     }
 
-    public static int getId(){
-        SharedPreferences sharedPreferences = mCtx.getSharedPreferences(SHARED_PRE_NAME, Context.MODE_PRIVATE);
-        return sharedPreferences.getInt(KEY_ID, 1);
-    }
-//    public String getPass(){
-//        SharedPreferences sharedPreferences = mCtx.getSharedPreferences(SHARED_PRE_NAME, Context.MODE_PRIVATE);
-//        return sharedPreferences.getString(KEY_PASS, null);
-//    }
 }

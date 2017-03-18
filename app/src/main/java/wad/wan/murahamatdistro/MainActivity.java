@@ -1,8 +1,10 @@
 package wad.wan.murahamatdistro;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.widget.PopupMenu;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,9 +14,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+import wad.wan.murahamatdistro.app.SharedPreManager;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,14 +29,10 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        if(!SharedPreManager.getInstance(this).isLoggedIn()){
+            finish();
+            startActivity(new Intent(this,LoginActivity.class));
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -67,7 +69,10 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_logout) {
+            SharedPreManager.getInstance(this).logout();
+            finish();
+            startActivity(new Intent(this,LoginActivity.class));
             return true;
         }
 
@@ -81,17 +86,17 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_input) {
-            // Handle the camera action
+            startActivity(new Intent(MainActivity.this,InputBarangActivity.class));
         } else if (id == R.id.nav_kategori) {
-
+            startActivity(new Intent(MainActivity.this,KategoriActivity.class));
         } else if (id == R.id.nav_promo) {
-
+            startActivity(new Intent(MainActivity.this,PromoActivity.class));
         } else if (id == R.id.nav_testimonial) {
-
+            startActivity(new Intent(MainActivity.this,TestimonialActivity.class));
         } else if (id == R.id.nav_transaksi) {
-
+            startActivity(new Intent(MainActivity.this,HistoryTransaksiActivity.class));
         } else if (id == R.id.nav_usermanage) {
-
+            startActivity(new Intent(MainActivity.this,UserManagementActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
