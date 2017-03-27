@@ -3,10 +3,15 @@ package wad.wan.murahamatdistro;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
@@ -62,13 +67,35 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage("Please wait...");
 
         button=(Button) findViewById(R.id.btn_login);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                userLogin();
-            }
-        });
 //        imei();
+
+        if (cek_status(this)) {
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    userLogin();
+                }
+            });
+
+        }else{
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("You are not connected internet. Please, connect first")
+                    .setCancelable(false)
+                    .setPositiveButton("Ya", new DialogInterface.OnClickListener() {
+                        public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                            startActivity(new Intent(Settings.ACTION_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Tidak", new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                            dialog.cancel();
+                            LoginActivity.this.finish();
+                        }
+                    });
+            final AlertDialog alert = builder.create();
+            alert.show();
+        }
+
     }
 
     private void userLogin(){
@@ -122,6 +149,21 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
         RequestHandler.getInstance(this).addToRequestQueue(stringRequest);
+
+    }
+
+    public boolean cek_status(Context cek) {
+        ConnectivityManager cm = (ConnectivityManager) cek.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+
+        if (info != null && info.isConnected())
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
 //    public void imei(){

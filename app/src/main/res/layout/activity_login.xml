@@ -42,6 +42,7 @@
             <EditText
                 android:id="@+id/edittext_Username"
                 android:layout_width="match_parent"
+                android:inputType="textPersonName"
                 android:layout_height="wrap_content"/>
             <TextView
                 android:id="@+id/text_password"

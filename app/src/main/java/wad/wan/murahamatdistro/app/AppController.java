@@ -7,7 +7,6 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
-import com.example.ilham.crud.volley.LruBitmapCache;
 
 /**
  * Created by user on 09/02/2017.

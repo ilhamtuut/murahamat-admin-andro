@@ -53,7 +53,7 @@ public class UserManagementActivity extends AppCompatActivity implements SwipeRe
     EditText text_id,text_username,text_password;
     String id,username,password;
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = UserManagementActivity.class.getSimpleName();
 
     private static String url_select = Url.URL_USER_DATA;
     private static String url_insert = Url.URL_USER_SAVE;
@@ -74,7 +74,7 @@ public class UserManagementActivity extends AppCompatActivity implements SwipeRe
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Data User");
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         fab =(FloatingActionButton) findViewById(R.id.fabs);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
@@ -99,17 +99,6 @@ public class UserManagementActivity extends AppCompatActivity implements SwipeRe
             public void onClick(View view) {
                 DialogForm("","","","SIMPAN");
             }
-        });
-
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final String idx = itemList.get(position).getId();
-                Toast.makeText(UserManagementActivity.this, idx,Toast.LENGTH_LONG).show();
-
-            }
-
         });
 
         list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -365,6 +354,12 @@ public class UserManagementActivity extends AppCompatActivity implements SwipeRe
             }
         };
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp(){
+        finish();
+        return true;
     }
 
 }

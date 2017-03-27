@@ -3,17 +3,17 @@
     package="wad.wan.murahamatdistro">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!--<uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
+    <!-- <uses-permission android:name="android.permission.READ_PHONE_STATE" /> -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".app.AppController"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".LoginActivity">
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,7 +26,10 @@
         <activity android:name=".TestimonialActivity" />
         <activity android:name=".UserManagementActivity" />
         <activity android:name=".HistoryTransaksiActivity" />
-        <activity android:name=".KategoriActivity"></activity>
+        <activity android:name=".KategoriActivity" />
+        <activity android:name=".DetailTestimonialActivity" />
+        <activity android:name=".DetailBarangActivity" />
+        <activity android:name=".DetailPromoActivity"></activity>
     </application>
 
 </manifest>

@@ -36,6 +36,8 @@
                 android:text="Nama"/>
             <EditText
                 android:id="@+id/edittext_nama"
+                android:singleLine="true"
+                android:inputType="text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
             <TextView
@@ -43,6 +45,8 @@
                 android:layout_height="wrap_content"
                 android:text="Nama Barang"/>
             <EditText
+                android:inputType="text"
+                android:singleLine="true"
                 android:id="@+id/edittext_deskripsi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
@@ -51,6 +55,8 @@
                 android:layout_height="wrap_content"
                 android:text="Tanggal"/>
             <EditText
+                android:id="@+id/tanggal"
+                android:inputType="date"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
             <TextView
@@ -58,6 +64,8 @@
                 android:layout_height="wrap_content"
                 android:text="Jumlah"/>
             <EditText
+                android:id="@+id/jumlah"
+                android:inputType="number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
             <TextView
@@ -65,6 +73,8 @@
                 android:layout_height="wrap_content"
                 android:text="Harga"/>
             <EditText
+                android:id="@+id/harga"
+                android:inputType="text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
             <Button

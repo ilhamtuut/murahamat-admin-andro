@@ -4,10 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <TextView
+        android:id="@+id/text_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+    <TextView
         android:id="@+id/text_kategori"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Kategori"
-        android:textSize="26dp"
+        android:textSize="16dp"
         android:padding="16dp"/>
 </LinearLayout>
