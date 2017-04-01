@@ -116,9 +116,9 @@ public class TesAdapter extends RecyclerView.Adapter<TesAdapter.MyViewHolder> {
         public boolean onMenuItemClick(MenuItem menuItem) {
             //final DataTestimonial album = albumList.get();
            switch (menuItem.getItemId()) {
-                case R.id.action_edit:
-                    Toast.makeText(mContext, "Edit "+id, Toast.LENGTH_SHORT).show();
-                    return true;
+//                case R.id.action_edit:
+//                    Toast.makeText(mContext, "Edit "+id, Toast.LENGTH_SHORT).show();
+//                    return true;
                 case R.id.action_delete:
                     Toast.makeText(mContext, "Delete", Toast.LENGTH_SHORT).show();
                     return true;

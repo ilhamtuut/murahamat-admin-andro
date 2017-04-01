@@ -20,9 +20,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -51,6 +53,8 @@ import wad.wan.murahamatdistro.adapter.TesAdapter;
 import wad.wan.murahamatdistro.adapter.TestimonialAdapter;
 import wad.wan.murahamatdistro.app.AppController;
 import wad.wan.murahamatdistro.app.RequestHandler;
+import wad.wan.murahamatdistro.data.DataBarang;
+import wad.wan.murahamatdistro.data.DataKategori;
 import wad.wan.murahamatdistro.data.DataPromo;
 import wad.wan.murahamatdistro.data.DataTestimonial;
 import wad.wan.murahamatdistro.url.Url;
@@ -58,32 +62,28 @@ import wad.wan.murahamatdistro.url.Url;
 public class PromoActivity extends AppCompatActivity {
 
     FloatingActionButton fab;
-    ListView list;
     SwipeRefreshLayout swipe;
     List<DataPromo> itemList = new ArrayList<DataPromo>();
+    ArrayList<String> arrbarang;
+    List<DataBarang> listBarang = new ArrayList<DataBarang>();
     PromoAdapter adapter;
     AlertDialog.Builder dialog;
     LayoutInflater inflater;
     View dialogView;
-    private RecyclerView recyclerView;
-    EditText text_id,text_nama_brg,text_promo,text_harga,text_ukuran,text_stock,text_merek,text_deskripsi,text_kategori;
-    String id,nama_brg,promo,gambar,ukuran,harga,kategori,merek,stock,deskripsi;
-    NetworkImageView networkImageView;
-    ImageView imageView;
-
-    ImageLoader imageLoader = AppController.geInstance().getImageLoader();
-
-    Bitmap bitmap;
+    RecyclerView recyclerView;
+    EditText text_id,text_nama_brg,text_promo,text_deskripsi;
+    String id,nama_brg,promo,deskripsi;
+    Spinner spinner;
     int success;
-    int PICK_IMAGE_REQUEST = 1;
 
-    private static final String TAG = TestimonialActivity.class.getSimpleName();
+    private static final String TAG = PromoActivity.class.getSimpleName();
 
     private static String url_select = Url.URL_PROMO;
     private static String url_insert = Url.URL_PROMO_SAVE;
     private static String url_update = Url.URL_PROMO_UPDATE;
     private static String url_delete = Url.URL_PROMO_DELETE;
     private static String url_edit = Url.URL_PROMO_ID;
+    private static String url_barang = Url.URL_BARANG;
 
     public static final String TAG_ID ="id";
     public static final String TAG_NAMABARANG ="nama_barang";
@@ -93,7 +93,7 @@ public class PromoActivity extends AppCompatActivity {
     public static final String TAG_STOCK ="stock";
     public static final String TAG_MEREK ="merek";
     public static final String TAG_KATEGORI ="kategori";
-    public static final String TAG_DESKRIPSI ="promo";
+    public static final String TAG_DESKRIPSI ="deskripsi";
     public static final String TAG_GAMBAR ="gambar";
     public static final String TAG_SUCCESS ="success";
     public static final String TAG_MESSAGE ="message";
@@ -115,7 +115,6 @@ public class PromoActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         //recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
-//        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setAdapter(adapter);
 
@@ -140,73 +139,19 @@ public class PromoActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DialogForm("","","","","","","","","","","SIMPAN");
+                DialogForm("","","","","SIMPAN");
             }
         });
-
-//        recyclerView.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                Intent intent = new Intent(PromoActivity.this, DetailTestimonialActivity.class);
-//                startActivity(intent);
-//                return false;
-//            }
-//        });
-//
-//        list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(final AdapterView<?> parent, View view,final int position, long id) {
-//                final String idx = itemList.get(position).getId();
-//                final String namax = itemList.get(position).getNama_barang();
-//                final String deskripsix = itemList.get(position).getDeskripsi();
-//                final String gambarx = itemList.get(position).getGambar();
-//                final CharSequence[] dialogitem = {"View","Edit","Delete"};
-//                dialog = new AlertDialog.Builder(PromoActivity.this);
-//                dialog.setCancelable(true);
-//                dialog.setItems(dialogitem, new DialogInterface.OnClickListener(){
-//                    @Override
-//                    public  void onClick(DialogInterface dialog,int which){
-//                        switch (which){
-//                            case 0:
-//                                Intent intent = new Intent(PromoActivity.this, DetailTestimonialActivity.class);
-//                                Bundle bn = new Bundle();
-//                                bn.putString("id", idx);
-//                                bn.putString("nama",namax);
-//                                bn.putString("deskripsi",deskripsix);
-//                                bn.putString("gambar",gambarx);
-//                                intent.putExtras(bn);
-//                                startActivity(intent);
-//                                break;
-//                            case 1:
-//                                edit(idx); //edit(idx);
-//                                break;
-//                            case 2:
-//                                delete(idx); //delete(idx);
-//                                break;
-//                        }
-//                    }
-//                }).show();
-//
-//                return false;
-//            }
-//        });
-    }
+  }
 
     private void kosong(){
         text_id.setText(null);
         text_nama_brg.setText(null);
-        text_kategori.setText(null);
-        text_ukuran.setText(null);
-        text_harga.setText(null);
-        text_merek.setText(null);
         text_deskripsi.setText(null);
-        text_stock.setText(null);
         text_promo.setText(null);
-        imageView.setImageResource(0);
     }
 
-    private void DialogForm(String idx, String namax, String promox,String gambarx,String stockx,String merekx ,
-                            String kategorix, String ukuranx, String hargax,String deskripsix,String button){
+    private void DialogForm(String idx, String namax, String promox,String deskripsix,String button){
         dialog = new AlertDialog.Builder(PromoActivity.this);
         inflater = getLayoutInflater();
         dialogView = inflater.inflate(R.layout.form_promo,null);
@@ -218,34 +163,28 @@ public class PromoActivity extends AppCompatActivity {
         text_id = (EditText) dialogView.findViewById(R.id.edittext_id);
         text_nama_brg = (EditText) dialogView.findViewById(R.id.edittext_namaBarang);
         text_promo = (EditText) dialogView.findViewById(R.id.edittext_promo);
-        text_kategori = (EditText) dialogView.findViewById(R.id.edittext_kategori);
-        text_ukuran = (EditText) dialogView.findViewById(R.id.edittext_ukuran);
-        text_harga = (EditText) dialogView.findViewById(R.id.edittext_harga);
-        text_merek = (EditText) dialogView.findViewById(R.id.edittext_merek);
         text_deskripsi = (EditText) dialogView.findViewById(R.id.edittext_deskripsi);
-        text_stock = (EditText) dialogView.findViewById(R.id.edittext_jumlahstock);
-        imageView = (ImageView) dialogView.findViewById(R.id.gambar_barang);
-        imageView.setOnClickListener(new View.OnClickListener() {
+
+        arrbarang = new ArrayList<String>();
+        spinner = (Spinner) dialogView.findViewById(R.id.spin_barang);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onClick(View v) {
-                showFileChooser();
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                text_nama_brg.setText(listBarang.get(position).getId());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                text_nama_brg.setText(null);
             }
         });
+        callBarang();
 
         if(!idx.isEmpty()){
             text_id.setText(idx);
             text_nama_brg.setText(namax);
             text_promo.setText(promox);
-            text_kategori.setText(kategorix);
-            text_ukuran.setText(ukuranx);
-            text_harga.setText(hargax);
-            text_merek.setText(merekx);
             text_deskripsi.setText(deskripsix);
-            text_stock.setText(stockx);
-
-            ImageLoader.ImageListener listener = ImageLoader.getImageListener(imageView,R.drawable.ic_menu_camera, R.drawable.ic_menu_camera);
-            imageLoader.get(gambarx, listener);
-
 
         }else {
             kosong();
@@ -257,12 +196,7 @@ public class PromoActivity extends AppCompatActivity {
                 id = text_id.getText().toString();
                 nama_brg = text_nama_brg.getText().toString();
                 promo = text_promo.getText().toString();
-                harga = text_harga.getText().toString();
-                ukuran = text_ukuran.getText().toString();
-                kategori = text_kategori.getText().toString();
-                merek = text_merek.getText().toString();
                 deskripsi = text_deskripsi.getText().toString();
-                stock = text_stock.getText().toString();
 
                 simpan_update();
                 dialog.dismiss();
@@ -361,33 +295,21 @@ public class PromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG,"Error"+ error.getMessage());
-                Toast.makeText(PromoActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(PromoActivity.this, "No Internet Connection",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
             protected Map<String,String> getParams(){
                 Map<String, String> params = new HashMap<String, String>();
                 if(id.isEmpty()){
-                    params.put("nama_barang",nama_brg);
-                    params.put("id_kategori",kategori);
+                    params.put("id_barang",nama_brg);
                     params.put("promo",promo);
-                    params.put("harga",harga);
-                    params.put("stock",stock);
-                    params.put("ukuran",ukuran);
-                    params.put("merek",merek);
                     params.put("deskripsi",deskripsi);
-                    params.put("gambar",getStringImage(bitmap));
                 }else {
                     params.put("id",id);
-                    params.put("nama",nama_brg);
-                    params.put("id_kategori",kategori);
+                    params.put("id_barang",nama_brg);
                     params.put("promo",promo);
-                    params.put("harga",harga);
-                    params.put("stock",stock);
-                    params.put("ukuran",ukuran);
-                    params.put("merek",merek);
                     params.put("deskripsi",deskripsi);
-                    params.put("gambar",getStringImage(bitmap));
                 }
                 return params;
             }
@@ -409,16 +331,9 @@ public class PromoActivity extends AppCompatActivity {
                         String idx = jObj.getString(TAG_ID);
                         String namax = jObj.getString(TAG_NAMABARANG);
                         String promox = jObj.getString(TAG_PROMO);
-                        String gambarx = jObj.getString(TAG_GAMBAR);
-                        String hargax = jObj.getString(TAG_HARGA);
-                        String stockx = jObj.getString(TAG_STOCK);
-                        String ukuranx = jObj.getString(TAG_UKURAN);
-                        String kategorix = jObj.getString(TAG_KATEGORI);
                         String deskripsix = jObj.getString(TAG_DESKRIPSI);
-                        String merekx = jObj.getString(TAG_MEREK);
 
-                        DialogForm(idx, namax, promox, gambarx, stockx, merekx ,
-                                 kategorix, ukuranx, hargax,deskripsix,"UPDATE");
+                        DialogForm(idx, namax, promox,deskripsix,"UPDATE");
                         adapter.notifyDataSetChanged();
                     }else{
                         Toast.makeText(PromoActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
@@ -431,7 +346,7 @@ public class PromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(PromoActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(PromoActivity.this, "No Internet Connection",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
@@ -482,37 +397,39 @@ public class PromoActivity extends AppCompatActivity {
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
-    public String getStringImage (Bitmap bmp){
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] imageBytes = baos.toByteArray();
-        String encodedIMage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-        return encodedIMage;
-    }
+    private void callBarang(){
 
-    private void showFileChooser(){
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent,"Select Picture"), PICK_IMAGE_REQUEST);
+        JsonArrayRequest jArr = new JsonArrayRequest(url_barang, new Response.Listener<JSONArray>(){
 
-    }
+            @Override
+            public void onResponse(JSONArray response){
+                Log.d(TAG,response.toString());
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode, resultCode, data);
+                for (int i=0; i<response.length(); i++){
+                    try {
+                        JSONObject obj = response.getJSONObject(i);
 
-        if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null){
-            Uri filePatch = data.getData();
-            try {
-                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
-                imageView.setImageBitmap(bitmap);
-            }catch (IOException e){
-                e.printStackTrace();
+                        DataBarang item = new DataBarang();
+                        item.setId(obj.getString("id"));
+                        item.setNama_barang(obj.getString("nama_barang"));
+                        listBarang.add(item);
+
+                        arrbarang.add(obj.getString("nama_barang"));
+                        spinner.setAdapter(new ArrayAdapter<String>(PromoActivity.this, android.R.layout.simple_spinner_dropdown_item, arrbarang));
+
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
             }
-        }
+        }, new Response.ErrorListener(){
+            @Override
+            public void onErrorResponse(VolleyError error){
+                VolleyLog.d(TAG,"Error" + error.getMessage());
+            }
+        });
+        RequestHandler.getInstance(this).addToRequestQueue(jArr);
     }
-
 
     @Override
     public boolean onSupportNavigateUp(){

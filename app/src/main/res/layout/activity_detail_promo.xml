@@ -47,8 +47,7 @@
                 android:layout_height="160dp"
                 android:layout_gravity="center"
                 android:layout_marginBottom="5dp"
-                android:scaleType="fitXY"
-                android:src="@drawable/ic_menu_gallery"/>
+                android:scaleType="fitXY"/>
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -58,47 +57,77 @@
                     android:layout_height="wrap_content"
                     android:text="Nama"
                     android:textStyle="bold"
-                    android:layout_marginBottom="5dp"
-                    android:layout_marginRight="5dp"/>
-                <TextView
+                    android:padding="10dp"
+                    android:layout_marginBottom="5dp"/>
+                <EditText
                     android:id="@+id/text_namabrg"
                     android:layout_toRightOf="@+id/nama_brg"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="5dp"
                     android:layout_marginLeft="35dp"/>
                 <TextView
-                    android:layout_marginRight="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:padding="10dp"
                     android:layout_below="@+id/nama_brg"
                     android:id="@+id/promo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Promo"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="5dp"/>
-                <TextView
+                    android:textStyle="bold"/>
+                <EditText
                     android:layout_below="@+id/text_namabrg"
                     android:id="@+id/text_promo"
                     android:layout_toRightOf="@+id/promo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="5dp"
                     android:layout_marginLeft="30dp"/>
                 <TextView
                     android:id="@+id/deskripsi"
                     android:layout_below="@+id/promo"
                     android:textStyle="bold"
-                    android:layout_marginRight="5dp"
+                    android:padding="10dp"
                     android:layout_marginBottom="5dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Deskripsi"/>
-                <TextView
-                    android:layout_below="@+id/deskripsi"
+                <EditText
+                    android:layout_below="@+id/text_promo"
                     android:id="@+id/text_deskripsi"
+                    android:layout_toRightOf="@+id/deskripsi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="5dp"/>
+                    android:layout_marginBottom="5dp"
+                    android:layout_marginLeft="15dp"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center">
+                <Button
+                    android:id="@+id/btn_edit"
+                    android:layout_width="60dp"
+                    android:layout_height="50dp"
+                    android:text="EDIT"
+                    android:layout_marginRight="10dp"
+                    android:textColor="#fff"
+                    android:background="@color/colorPrimary"/>
+                <Button
+                    android:id="@+id/btn_update"
+                    android:layout_toRightOf="@+id/btn_edit"
+                    android:layout_width="60dp"
+                    android:layout_height="50dp"
+                    android:layout_marginRight="10dp"
+                    android:text="Update"
+                    android:textColor="#fff"
+                    android:background="@color/colorPrimary"/>
+                <Button
+                    android:id="@+id/btn_batal"
+                    android:layout_toRightOf="@+id/btn_update"
+                    android:layout_width="60dp"
+                    android:layout_height="50dp"
+                    android:text="Batal"
+                    android:textColor="#fff"
+                    android:background="@color/colorPrimary"/>
             </RelativeLayout>
         </LinearLayout>
     </ScrollView>

@@ -30,7 +30,7 @@ import wad.wan.murahamatdistro.data.DataBarang;
 public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHolder>{
     private Context mContext;
     private List<DataBarang> albumList;
-    private static final String TAG = "Tes";
+    private static final String TAG = "Barang";
     ImageLoader imageLoader = AppController.geInstance().getImageLoader();
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
@@ -83,7 +83,8 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
                 final String idx = album.getId();
                 final String namax = album.getNama_barang();
                 final String ukuranx = album.getUkuran();
-                final String kategorix = album.getId_kategori();
+                final String id_kategorix = album.getId_kategori();
+                final String kategorix = album.getKategori();
                 final String stockx = album.getStock();
                 final String hargax = album.getHarga();
                 final String merekx = album.getMerek();
@@ -93,6 +94,7 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
                 bn.putString("id", idx);
                 bn.putString("nama",namax);
                 bn.putString("ukuran",ukuranx);
+                bn.putString("id_kategori",id_kategorix);
                 bn.putString("kategori",kategorix);
                 bn.putString("stock", stockx);
                 bn.putString("harga",hargax);
@@ -132,9 +134,9 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
         public boolean onMenuItemClick(MenuItem menuItem) {
             //final DataTestimonial album = albumList.get();
             switch (menuItem.getItemId()) {
-                case R.id.action_edit:
-                    Toast.makeText(mContext, "Edit "+id, Toast.LENGTH_SHORT).show();
-                    return true;
+//                case R.id.action_edit:
+//                    Toast.makeText(mContext, "Edit "+id, Toast.LENGTH_SHORT).show();
+//                    return true;
                 case R.id.action_delete:
                     Toast.makeText(mContext, "Delete", Toast.LENGTH_SHORT).show();
                     return true;

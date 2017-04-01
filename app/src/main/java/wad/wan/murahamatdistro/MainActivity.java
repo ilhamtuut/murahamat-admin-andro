@@ -228,6 +228,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onErrorResponse(VolleyError error){
                 VolleyLog.d(TAG,"Error" + error.getMessage());
+                Toast.makeText(MainActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
                 swipe.setRefreshing(false);
             }
         });

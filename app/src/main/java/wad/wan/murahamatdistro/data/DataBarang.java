@@ -4,14 +4,15 @@ package wad.wan.murahamatdistro.data;
  * Created by user on 18/03/2017.
  */
 public class DataBarang {
-    public String id,nama_barang,id_kategori,harga,ukuran,merek,gambar,stock,deskripsi;
+    public String id,nama_barang,id_kategori,kategori,harga,ukuran,merek,gambar,stock,deskripsi;
 
     public DataBarang(){}
 
-    public DataBarang(String id, String nama_barang, String id_kategori, String harga, String ukuran, String merek, String gambar, String stock, String deskripsi) {
+    public DataBarang(String id, String nama_barang, String id_kategori,String kategori, String harga, String ukuran, String merek, String gambar, String stock, String deskripsi) {
         this.id = id;
         this.nama_barang = nama_barang;
         this.id_kategori = id_kategori;
+        this.kategori = kategori;
         this.harga = harga;
         this.ukuran = ukuran;
         this.merek = merek;
@@ -42,6 +43,14 @@ public class DataBarang {
 
     public void setId_kategori(String id_kategori) {
         this.id_kategori = id_kategori;
+    }
+
+    public String getKategori() {
+        return kategori;
+    }
+
+    public void setKategori(String kategori) {
+        this.kategori = kategori;
     }
 
     public String getHarga() {

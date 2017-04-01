@@ -3,8 +3,9 @@
     package="wad.wan.murahamatdistro">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- <uses-permission android:name="android.permission.READ_PHONE_STATE" /> -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".app.AppController"
@@ -29,7 +30,7 @@
         <activity android:name=".KategoriActivity" />
         <activity android:name=".DetailTestimonialActivity" />
         <activity android:name=".DetailBarangActivity" />
-        <activity android:name=".DetailPromoActivity"></activity>
+        <activity android:name=".DetailPromoActivity" />
     </application>
 
 </manifest>
