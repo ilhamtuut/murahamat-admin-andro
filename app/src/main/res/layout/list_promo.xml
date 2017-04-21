@@ -16,8 +16,7 @@
         android:layout_height="50dp"
         android:layout_alignParentLeft="true"
         android:layout_marginRight="8dp"
-        android:scaleType="fitXY"
-        android:background="@drawable/ic_menu_gallery"/>
+        android:scaleType="fitXY"/>
     <TextView
         android:id="@+id/nama_brg"
         android:layout_width="wrap_content"

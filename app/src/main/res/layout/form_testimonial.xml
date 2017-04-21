@@ -22,7 +22,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nama"/>
+                android:text="Name"/>
             <EditText
                 android:id="@+id/edittext_nama"
                 android:layout_width="match_parent"
@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Deskripsi"/>
+                android:text="Description"/>
             <EditText
                 android:id="@+id/edittext_deskripsi"
                 android:layout_width="match_parent"
@@ -38,14 +38,17 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gambar"/>
+                android:text="Image"/>
+            <Button
+                android:id="@+id/btn_pilihGambar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Image"/>
             <ImageView
                 android:id="@+id/gambar_resi"
                 android:layout_gravity="center"
-                android:scaleType="fitXY"
-                android:layout_width="match_parent"
-                android:layout_height="160dp"
-                android:background="@drawable/ic_menu_camera"/>
+                android:layout_width="200dp"
+                android:layout_height="200dp"/>
         </LinearLayout>
     </ScrollView>
 

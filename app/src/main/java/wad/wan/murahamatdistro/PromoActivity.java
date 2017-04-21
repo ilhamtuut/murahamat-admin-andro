@@ -3,7 +3,7 @@ package wad.wan.murahamatdistro;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -11,92 +11,69 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.NetworkImageView;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import wad.wan.murahamatdistro.adapter.PromoAdapter;
-import wad.wan.murahamatdistro.adapter.TesAdapter;
-import wad.wan.murahamatdistro.adapter.TestimonialAdapter;
-import wad.wan.murahamatdistro.app.AppController;
+import wad.wan.murahamatdistro.adapter.PromosAdapter;
+import wad.wan.murahamatdistro.adapter.SearchAdapte;
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.data.DataBarang;
-import wad.wan.murahamatdistro.data.DataKategori;
-import wad.wan.murahamatdistro.data.DataPromo;
-import wad.wan.murahamatdistro.data.DataTestimonial;
-import wad.wan.murahamatdistro.url.Url;
+import wad.wan.murahamatdistro.data.Products;
+import wad.wan.murahamatdistro.data.Promo;
 
 public class PromoActivity extends AppCompatActivity {
 
     FloatingActionButton fab;
     SwipeRefreshLayout swipe;
-    List<DataPromo> itemList = new ArrayList<DataPromo>();
-    ArrayList<String> arrbarang;
-    List<DataBarang> listBarang = new ArrayList<DataBarang>();
-    PromoAdapter adapter;
+    List<Promo> itemList = new ArrayList<Promo>();
+    PromosAdapter adapter;
     AlertDialog.Builder dialog;
     LayoutInflater inflater;
     View dialogView;
     RecyclerView recyclerView;
-    EditText text_id,text_nama_brg,text_promo,text_deskripsi;
-    String id,nama_brg,promo,deskripsi;
-    Spinner spinner;
-    int success;
+    EditText namaPromo,description;
+    String namaPromos,descriptions,status;
+    Button buttonChooseImage;
+    ImageView imageView;
+    Bitmap bitmap;
+    MaterialSearchView searchView;
+    int PICK_IMAGE_REQUEST = 1;
 
     private static final String TAG = PromoActivity.class.getSimpleName();
-
-    private static String url_select = Url.URL_PROMO;
-    private static String url_insert = Url.URL_PROMO_SAVE;
-    private static String url_update = Url.URL_PROMO_UPDATE;
-    private static String url_delete = Url.URL_PROMO_DELETE;
-    private static String url_edit = Url.URL_PROMO_ID;
-    private static String url_barang = Url.URL_BARANG;
-
-    public static final String TAG_ID ="id";
-    public static final String TAG_NAMABARANG ="nama_barang";
-    public static final String TAG_PROMO ="promo";
-    public static final String TAG_HARGA ="harga";
-    public static final String TAG_UKURAN ="ukuran";
-    public static final String TAG_STOCK ="stock";
-    public static final String TAG_MEREK ="merek";
-    public static final String TAG_KATEGORI ="kategori";
-    public static final String TAG_DESKRIPSI ="deskripsi";
-    public static final String TAG_GAMBAR ="gambar";
-    public static final String TAG_SUCCESS ="success";
-    public static final String TAG_MESSAGE ="message";
+    private static  String url_promo="http://192.168.43.174/mrmht/public/api/promo";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,13 +82,15 @@ public class PromoActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Promo");
+        toolbar.setTitleTextColor(Color.parseColor("#FFFFFF"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        searchView = (MaterialSearchView) findViewById(R.id.searchView);
         fab =(FloatingActionButton) findViewById(R.id.fabs);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
 
         itemList = new ArrayList<>();
-        adapter = new PromoAdapter(this, itemList);
+        adapter = new PromosAdapter(this, itemList);
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         //recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
@@ -134,21 +113,72 @@ public class PromoActivity extends AppCompatActivity {
                 itemList.clear();
                 adapter.notifyDataSetChanged();
                 callVolley();
+
             }
         });
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DialogForm("","","","","SIMPAN");
+                DialogForm("","","","","Save");
             }
         });
-  }
+
+        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
+            @Override
+            public void onSearchViewShown() {
+
+            }
+
+            @Override
+            public void onSearchViewClosed() {
+                adapter = new PromosAdapter(PromoActivity.this, itemList);
+                recyclerView.setAdapter(adapter);
+//                callVolley();
+            }
+        });
+
+
+        searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(newText!=null&&!newText.isEmpty()){
+                    List<Promo> productses = new ArrayList<Promo>();
+                    for(Promo item:itemList){
+                        if (item.getName().contains(newText)){
+                            productses.add(item);
+                        }
+                        adapter = new PromosAdapter(PromoActivity.this, productses);
+                        recyclerView.setAdapter(adapter);
+                    }
+                }else {
+                    adapter = new PromosAdapter(PromoActivity.this, itemList);
+                    recyclerView.setAdapter(adapter);
+//                    callVolley();
+                }
+                return false;
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        MenuItem item = menu.findItem(R.id.search);
+        searchView.setMenuItem(item);
+        return true;
+    }
 
     private void kosong(){
-        text_id.setText(null);
-        text_nama_brg.setText(null);
-        text_deskripsi.setText(null);
-        text_promo.setText(null);
+        namaPromo.setText(null);
+        description.setText(null);
+        imageView.setImageResource(0);
     }
 
     private void DialogForm(String idx, String namax, String promox,String deskripsix,String button){
@@ -160,52 +190,31 @@ public class PromoActivity extends AppCompatActivity {
 //        dialog.setIcon(R.mipmap.ic_launcher);
         dialog.setTitle("Promo");
 
-        text_id = (EditText) dialogView.findViewById(R.id.edittext_id);
-        text_nama_brg = (EditText) dialogView.findViewById(R.id.edittext_namaBarang);
-        text_promo = (EditText) dialogView.findViewById(R.id.edittext_promo);
-        text_deskripsi = (EditText) dialogView.findViewById(R.id.edittext_deskripsi);
-
-        arrbarang = new ArrayList<String>();
-        spinner = (Spinner) dialogView.findViewById(R.id.spin_barang);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        namaPromo = (EditText) dialogView.findViewById(R.id.namePromo);
+        description = (EditText) dialogView.findViewById(R.id.description);
+        buttonChooseImage = (Button) dialogView.findViewById(R.id.btn_pilihGambar);
+        imageView = (ImageView) dialogView.findViewById(R.id.imageViewPromo);
+        buttonChooseImage.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                text_nama_brg.setText(listBarang.get(position).getId());
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                text_nama_brg.setText(null);
+            public void onClick(View v) {
+                showFileChooser();
             }
         });
-        callBarang();
-
-        if(!idx.isEmpty()){
-            text_id.setText(idx);
-            text_nama_brg.setText(namax);
-            text_promo.setText(promox);
-            text_deskripsi.setText(deskripsix);
-
-        }else {
-            kosong();
-        }
 
         dialog.setPositiveButton(button,new DialogInterface.OnClickListener(){
             @Override
             public void onClick(DialogInterface dialog, int which){
-                id = text_id.getText().toString();
-                nama_brg = text_nama_brg.getText().toString();
-                promo = text_promo.getText().toString();
-                deskripsi = text_deskripsi.getText().toString();
+                namaPromos = namaPromo.getText().toString();
+                descriptions = description.getText().toString();
 
-                simpan_update();
+                save();
                 dialog.dismiss();
                 kosong();
             }
 
         });
 
-        dialog.setNegativeButton("Batal",new DialogInterface.OnClickListener(){
+        dialog.setNegativeButton("Cancel",new DialogInterface.OnClickListener(){
             @Override
             public void onClick(DialogInterface dialog, int which){
                 dialog.dismiss();
@@ -220,7 +229,7 @@ public class PromoActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
 
-        JsonArrayRequest jArr = new JsonArrayRequest(url_select, new Response.Listener<JSONArray>(){
+        JsonArrayRequest jArr = new JsonArrayRequest(url_promo, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
@@ -230,17 +239,13 @@ public class PromoActivity extends AppCompatActivity {
                     try {
                         JSONObject obj = response.getJSONObject(i);
 
-                        DataPromo item = new DataPromo();
-                        item.setId(obj.getString(TAG_ID));
-                        item.setNama_barang(obj.getString(TAG_NAMABARANG));
-                        item.setKategori(obj.getString(TAG_KATEGORI));
-                        item.setHarga(obj.getString(TAG_HARGA));
-                        item.setPromo(obj.getString(TAG_PROMO));
-                        item.setStock(obj.getString(TAG_STOCK));
-                        item.setUkuran(obj.getString(TAG_UKURAN));
-                        item.setMerek(obj.getString(TAG_MEREK));
-                        item.setDeskripsi(obj.getString(TAG_DESKRIPSI));
-                        item.setGambar(obj.getString(TAG_GAMBAR));
+                        Promo item = new Promo();
+                        item.setId(obj.getString("id"));
+                        item.setName(obj.getString("name"));
+                        item.setDescription(obj.getString("description"));
+                        item.setImage(obj.getString("image"));
+                        item.setCreated_at(obj.getString("created_at"));
+                        item.setUpdated_at(obj.getString("updated_at"));
 
                         itemList.add(item);
 
@@ -261,32 +266,32 @@ public class PromoActivity extends AppCompatActivity {
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
     }
 
-    private void simpan_update(){
-        String url;
-        if(id.isEmpty()){
-            url = url_insert;
-        }else {
-            url = url_update;
-        }
+    private void save(){
+        RequestQueue queue= Volley.newRequestQueue(this);
 
-        StringRequest strReq=new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+        Map<String, String> jsonParams = new HashMap<String, String>();
+        jsonParams.put("name",namaPromos);
+        jsonParams.put("description",descriptions);
+        jsonParams.put("image",getStringImage(bitmap));
+        Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST, url_promo, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Response:" + response.toString());
+            public void onResponse(JSONObject response) {
                 try {
-                    JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
-
-                    if (success == 1) {
-                        Log.d("add/update", jObj.toString());
+                    Log.d("update", response.toString());
+                    status = response.getString("status");
+                    if(status.equals("ok")){
                         callVolley();
                         kosong();
-
-                        Toast.makeText(PromoActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        Toast.makeText(PromoActivity.this, "Success saved promo",Toast.LENGTH_LONG).show();
                         adapter.notifyDataSetChanged();
-                    } else {
-                        Toast.makeText(PromoActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+
+                    }else{
+                        Toast.makeText(PromoActivity.this, "Failed saved promo",Toast.LENGTH_LONG).show();
                     }
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -294,88 +299,42 @@ public class PromoActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d(TAG,"Error"+ error.getMessage());
-                Toast.makeText(PromoActivity.this, "No Internet Connection",Toast.LENGTH_LONG).show();
+                Log.d(TAG,"Error "+ error.getMessage());
+                Toast.makeText(PromoActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
-            protected Map<String,String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                if(id.isEmpty()){
-                    params.put("id_barang",nama_brg);
-                    params.put("promo",promo);
-                    params.put("deskripsi",deskripsi);
-                }else {
-                    params.put("id",id);
-                    params.put("id_barang",nama_brg);
-                    params.put("promo",promo);
-                    params.put("deskripsi",deskripsi);
-                }
-                return params;
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String,String>();
+                return headers;
+            }
+
+            @Override
+            public String getBodyContentType() {
+                return "application/json";
             }
         };
-        RequestHandler.getInstance(this).addToRequestQueue(strReq);
+        queue.add(jsonObjectRequest);
     }
 
-    private void edit(final String idx){
-        StringRequest strReq = new StringRequest(Request.Method.POST, url_edit, new Response.Listener<String>() {
+
+    public void delete(final String idx){
+        StringRequest strReq = new StringRequest(
+                Request.Method.DELETE, url_promo +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
                 try{
                     JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
-
-                    if(success==1){
-                        Log.d("get edit data", jObj.toString());
-                        String idx = jObj.getString(TAG_ID);
-                        String namax = jObj.getString(TAG_NAMABARANG);
-                        String promox = jObj.getString(TAG_PROMO);
-                        String deskripsix = jObj.getString(TAG_DESKRIPSI);
-
-                        DialogForm(idx, namax, promox,deskripsix,"UPDATE");
-                        adapter.notifyDataSetChanged();
-                    }else{
-                        Toast.makeText(PromoActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                    }
-                }catch (JSONException e){
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener(){
-            @Override
-            public void onErrorResponse(VolleyError error){
-                Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(PromoActivity.this, "No Internet Connection",Toast.LENGTH_LONG).show();
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("id",idx);
-                return params;
-            }
-        };
-        RequestHandler.getInstance(this).addToRequestQueue(strReq);
-    }
-
-    private void delete(final String idx){
-        StringRequest strReq = new StringRequest(Request.Method.POST, url_delete, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG,"Response:" + response.toString());
-                try{
-                    JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
-
-                    if(success==1){
-                        Log.d("delete", jObj.toString());
+                    status = jObj.getString("status");
+                    if(status.equals("ok")){
                         callVolley();
-                        Toast.makeText(PromoActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        Toast.makeText(PromoActivity.this, "Success delete promo",Toast.LENGTH_LONG).show();
                         adapter.notifyDataSetChanged();
-                    }else{
-                        Toast.makeText(PromoActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                    }else {
+                        Toast.makeText(PromoActivity.this, "Failed delete promo",Toast.LENGTH_LONG).show();
                     }
+
                 }catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -384,51 +343,51 @@ public class PromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(PromoActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("id",idx);
-                return params;
-            }
-        };
-        RequestHandler.getInstance(this).addToRequestQueue(strReq);
-    }
-
-    private void callBarang(){
-
-        JsonArrayRequest jArr = new JsonArrayRequest(url_barang, new Response.Listener<JSONArray>(){
-
-            @Override
-            public void onResponse(JSONArray response){
-                Log.d(TAG,response.toString());
-
-                for (int i=0; i<response.length(); i++){
-                    try {
-                        JSONObject obj = response.getJSONObject(i);
-
-                        DataBarang item = new DataBarang();
-                        item.setId(obj.getString("id"));
-                        item.setNama_barang(obj.getString("nama_barang"));
-                        listBarang.add(item);
-
-                        arrbarang.add(obj.getString("nama_barang"));
-                        spinner.setAdapter(new ArrayAdapter<String>(PromoActivity.this, android.R.layout.simple_spinner_dropdown_item, arrbarang));
-
-                    }catch (JSONException e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }, new Response.ErrorListener(){
-            @Override
-            public void onErrorResponse(VolleyError error){
-                VolleyLog.d(TAG,"Error" + error.getMessage());
+                Toast.makeText(PromoActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
             }
         });
-        RequestHandler.getInstance(this).addToRequestQueue(jArr);
+        RequestHandler.getInstance(this).addToRequestQueue(strReq);
+    }
+
+    public String getStringImage (Bitmap bmp){
+        if(bitmap!=null){
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] imageBytes = baos.toByteArray();
+            String encodedIMage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+            return encodedIMage;
+        }else{
+            String img = "";
+            return img;
+        }
+    }
+
+    private void showFileChooser(){
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent,"Select Picture"), PICK_IMAGE_REQUEST);
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null){
+            Uri filePatch = data.getData();
+            if(filePatch!=null){
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView.setImageBitmap(bitmap);
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }else {
+                bitmap=null;
+                Toast.makeText(this, "No Image is selected.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override

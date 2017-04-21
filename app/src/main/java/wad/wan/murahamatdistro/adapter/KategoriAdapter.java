@@ -11,8 +11,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import wad.wan.murahamatdistro.R;
-import wad.wan.murahamatdistro.data.DataKategori;
-import wad.wan.murahamatdistro.data.DataUser;
+import wad.wan.murahamatdistro.data.Category;
 
 /**
  * Created by user on 19/03/2017.
@@ -20,9 +19,9 @@ import wad.wan.murahamatdistro.data.DataUser;
 public class KategoriAdapter extends BaseAdapter {
     private Activity activity;
     private LayoutInflater inflater;
-    private List<DataKategori> items;
+    private List<Category> items;
 
-    public KategoriAdapter(Activity activity, List<DataKategori> items) {
+    public KategoriAdapter(Activity activity, List<Category> items) {
         this.activity = activity;
         this.items = items;
     }
@@ -50,10 +49,10 @@ public class KategoriAdapter extends BaseAdapter {
         TextView id = (TextView) convertView.findViewById(R.id.text_id);
         TextView kategori = (TextView) convertView.findViewById(R.id.text_kategori);
 
-        DataKategori data = items.get(position);
+        Category data = items.get(position);
 
         id.setText(data.getId());
-        kategori.setText(data.getKategori());
+        kategori.setText(data.getName());
 
         return  convertView;
     }

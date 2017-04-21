@@ -65,9 +65,14 @@ public class TestimonialAdapter extends BaseAdapter {
         DataTestimonial data = items.get(position);
 
         id.setText(data.getId());
-        nama.setText(data.getNama());
-        deskripsi.setText(data.getDeskripsi());
-        foto.setImageUrl(data.getGambar(), imageLoader);
+        nama.setText(data.getName());
+        deskripsi.setText(data.getTesti());
+        if(data.getImage()!=null){
+            foto.setImageUrl(data.getImage(), imageLoader);
+        }else {
+            foto.setImageResource(R.mipmap.ic_launcher);
+        }
+
 
         return  convertView;
     }

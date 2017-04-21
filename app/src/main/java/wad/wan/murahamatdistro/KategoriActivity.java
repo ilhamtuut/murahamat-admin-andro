@@ -1,6 +1,7 @@
 package wad.wan.murahamatdistro;
 
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
@@ -9,18 +10,25 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,38 +40,28 @@ import java.util.List;
 import java.util.Map;
 
 import wad.wan.murahamatdistro.adapter.KategoriAdapter;
-import wad.wan.murahamatdistro.adapter.UserAdapter;
+import wad.wan.murahamatdistro.adapter.PromosAdapter;
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.data.DataKategori;
-import wad.wan.murahamatdistro.data.DataUser;
-import wad.wan.murahamatdistro.url.Url;
+import wad.wan.murahamatdistro.data.Category;
+import wad.wan.murahamatdistro.data.Promo;
 
 public class KategoriActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     FloatingActionButton fab;
     ListView list;
     SwipeRefreshLayout swipe;
-    List<DataKategori> itemList = new ArrayList<DataKategori>();
+    List<Category> itemList = new ArrayList<Category>();
     KategoriAdapter adapter;
-    int success;
+    String success;
     AlertDialog.Builder dialog;
     LayoutInflater inflater;
     View dialogView;
     EditText text_id,text_kategori;
-    String id,kategori;
+    String id,kategori,status;
+    MaterialSearchView searchView;
 
     private static final String TAG = KategoriActivity.class.getSimpleName();
-
-    private static String url_select = Url.URL_KATEGORI;
-    private static String url_insert = Url.URL_KATEGORI_SAVE;
-    private static String url_update = Url.URL_KATEGORI_UPDATE;
-    private static String url_delete = Url.URL_KATEGORI_DELETE;
-    private static String url_edit = Url.URL_KATEGORI_ID;
-
-    public static final String TAG_ID ="id";
-    public static final String TAG_KATEGORI ="kategori";
-    public static final String TAG_SUCCESS ="success";
-    public static final String TAG_MESSAGE ="message";
+    private static String url = "http://192.168.43.174/mrmht/public/api/category";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,9 +69,11 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
         setContentView(R.layout.activity_kategori);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("Kategori");
+        getSupportActionBar().setTitle("Category");
+        toolbar.setTitleTextColor(Color.parseColor("#FFFFFF"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        searchView = (MaterialSearchView) findViewById(R.id.searchView);
         fab =(FloatingActionButton) findViewById(R.id.fabs);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
         list = (ListView) findViewById(R.id.list);
@@ -95,7 +95,7 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DialogForm("","","SIMPAN");
+                DialogForm("","","Save");
             }
         });
 
@@ -124,8 +124,58 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
                 return false;
             }
         });
-    }
 
+
+        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
+            @Override
+            public void onSearchViewShown() {
+
+            }
+
+            @Override
+            public void onSearchViewClosed() {
+                adapter = new KategoriAdapter(KategoriActivity.this, itemList);
+                list.setAdapter(adapter);
+//                callVolley();
+            }
+        });
+
+
+        searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(newText!=null&&!newText.isEmpty()){
+                    List<Category> productses = new ArrayList<Category>();
+                    for(Category item:itemList){
+                        if (item.getName().contains(newText)){
+                            productses.add(item);
+                        }
+                        adapter = new KategoriAdapter(KategoriActivity.this, productses);
+                        list.setAdapter(adapter);
+                    }
+                }else {
+                    adapter = new KategoriAdapter(KategoriActivity.this, itemList);
+                    list.setAdapter(adapter);
+//                    callVolley();
+                }
+                return false;
+            }
+        });
+
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        MenuItem item = menu.findItem(R.id.search);
+        searchView.setMenuItem(item);
+        return true;
+    }
 
     @Override
     public void onRefresh(){
@@ -147,7 +197,7 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
         dialog.setView(dialogView);
         dialog.setCancelable(true);
 //        dialog.setIcon(R.mipmap.ic_launcher);
-        dialog.setTitle("Add Kategori");
+        dialog.setTitle("Add Category");
 
         text_id = (EditText) dialogView.findViewById(R.id.text_id);
         text_kategori = (EditText) dialogView.findViewById(R.id.text_kategori);
@@ -172,7 +222,7 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
 
         });
 
-        dialog.setNegativeButton("Batal",new DialogInterface.OnClickListener(){
+        dialog.setNegativeButton("Cancel",new DialogInterface.OnClickListener(){
             @Override
             public void onClick(DialogInterface dialog, int which){
                 dialog.dismiss();
@@ -187,7 +237,7 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
 
-        JsonArrayRequest jArr = new JsonArrayRequest(url_select, new Response.Listener<JSONArray>(){
+        JsonArrayRequest jArr = new JsonArrayRequest(url, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
@@ -197,9 +247,10 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
                     try {
                         JSONObject obj = response.getJSONObject(i);
 
-                        DataKategori item = new DataKategori();
-                        item.setId(obj.getString(TAG_ID));
-                        item.setKategori(obj.getString(TAG_KATEGORI));
+                        Category item = new Category();
+                        item.setId(obj.getString("id"));
+                        item.setName(obj.getString("name"));
+                        item.setDescription(obj.getString("description"));
 
                         itemList.add(item);
 
@@ -221,77 +272,122 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
     }
 
     private void simpan_update(){
-        String url;
         if(id.isEmpty()){
-            url = url_insert;
-        }else {
-            url = url_update;
-        }
+            RequestQueue queue= Volley.newRequestQueue(this);
 
-        StringRequest strReq=new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Response:" + response.toString());
-                try {
-                    JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
+            Map<String, String> jsonParams = new HashMap<String, String>();
+            jsonParams.put("name",kategori);
+            jsonParams.put("description","category");
+            Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
 
-                    if (success == 1) {
-                        Log.d("add/update", jObj.toString());
-                        callVolley();
-                        kosong();
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.POST, url, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        Log.d("save", response.toString());
+                        status = response.getString("status");
+                        if(status.equals("ok")){
+                            callVolley();
+                            kosong();
+                            Toast.makeText(KategoriActivity.this, "Success saved category",Toast.LENGTH_LONG).show();
+                            adapter.notifyDataSetChanged();
 
-                        Toast.makeText(KategoriActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                        adapter.notifyDataSetChanged();
-                    } else {
-                        Toast.makeText(KategoriActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        }else{
+                            Toast.makeText(KategoriActivity.this, "Failed saved category",Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
                 }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG,"Error"+ error.getMessage());
-                Toast.makeText(KategoriActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
-            }
-        }){
-            @Override
-            protected Map<String,String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                if(id.isEmpty()){
-                    params.put("kategori",kategori);
-                }else {
-                    params.put("id",id);
-                    params.put("kategori",kategori);
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(TAG,"Error"+ error.getMessage());
+                    Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
                 }
-                return params;
-            }
-        };
-        RequestHandler.getInstance(this).addToRequestQueue(strReq);
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String,String>();
+                    return headers;
+                }
+
+                @Override
+                public String getBodyContentType() {
+                    return "application/json";
+                }
+            };
+            queue.add(jsonObjectRequest);
+//            RequestHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
+        }else {
+            RequestQueue queue= Volley.newRequestQueue(this);
+
+            Map<String, String> jsonParams = new HashMap<String, String>();
+            jsonParams.put("name",kategori);
+            jsonParams.put("description","category");
+            Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.PUT, url+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        Log.d("update", response.toString());
+                        status = response.getString("status");
+                        if(status.equals("ok")){
+                            callVolley();
+                            kosong();
+                            Toast.makeText(KategoriActivity.this, "Success update category",Toast.LENGTH_LONG).show();
+                            adapter.notifyDataSetChanged();
+                        }else{
+                            Toast.makeText(KategoriActivity.this, "Failed update category",Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(TAG,"Error"+ error.getMessage());
+                    Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String,String>();
+                    return headers;
+                }
+
+                @Override
+                public String getBodyContentType() {
+                    return "application/json";
+                }
+            };
+            queue.add(jsonObjectRequest);
+            //RequestHandler.getInstance(this).addToRequestQueue(strReq);
+        }
     }
 
     private void edit(final String idx){
-        StringRequest strReq = new StringRequest(Request.Method.POST, url_edit, new Response.Listener<String>() {
+        StringRequest strReq = new StringRequest(
+                Request.Method.GET, url+"/"+idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
                 try{
                     JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
 
-                    if(success==1){
                         Log.d("get edit data", jObj.toString());
-                        String idx = jObj.getString(TAG_ID);
-                        String kategorix = jObj.getString(TAG_KATEGORI);
+                        String idx = jObj.getString("id");
+                        String kategorix = jObj.getString("name");
+                        String descriptionx = jObj.getString("description");
 
                         DialogForm(idx, kategorix ,"UPDATE");
                         adapter.notifyDataSetChanged();
-
-                    }else{
-                        Toast.makeText(KategoriActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                    }
                 }catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -300,36 +396,29 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(KategoriActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
             }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("id",idx);
-                return params;
-            }
-        };
+        });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
     private void delete(final String idx){
-        StringRequest strReq = new StringRequest(Request.Method.POST, url_delete, new Response.Listener<String>() {
+        StringRequest strReq = new StringRequest(
+                Request.Method.DELETE, url +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
                 try{
                     JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
-
-                    if(success==1){
-                        Log.d("delete", jObj.toString());
+                    status = jObj.getString("status");
+                    if(status.equals("ok")){
                         callVolley();
-                        Toast.makeText(KategoriActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        Toast.makeText(KategoriActivity.this, "Success delete category",Toast.LENGTH_LONG).show();
                         adapter.notifyDataSetChanged();
                     }else{
-                        Toast.makeText(KategoriActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        Toast.makeText(KategoriActivity.this, "Success delete category",Toast.LENGTH_LONG).show();
                     }
+
                 }catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -338,16 +427,9 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(KategoriActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
             }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("id",idx);
-                return params;
-            }
-        };
+        });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 

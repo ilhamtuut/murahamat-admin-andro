@@ -120,7 +120,7 @@ public class TesAdapter extends RecyclerView.Adapter<TesAdapter.MyViewHolder> {
 //                    Toast.makeText(mContext, "Edit "+id, Toast.LENGTH_SHORT).show();
 //                    return true;
                 case R.id.action_delete:
-                    Toast.makeText(mContext, "Delete", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, "Delete"+id, Toast.LENGTH_SHORT).show();
                     return true;
                 default:
             }

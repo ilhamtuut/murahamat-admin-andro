@@ -14,42 +14,38 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <EditText
-                android:id="@+id/edittext_id"
-                android:visibility="gone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nama Barang"/>
-            <Spinner
-                android:id="@+id/spin_barang"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:text="Name Promo"/>
             <EditText
-                android:id="@+id/edittext_namaBarang"
-                android:visibility="gone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Promo"/>
-            <EditText
-                android:id="@+id/edittext_promo"
+                android:id="@+id/namePromo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:maxLines="5"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Deskripsi"/>
+                android:text="Description"/>
             <EditText
-                android:id="@+id/edittext_deskripsi"
+                android:id="@+id/description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:maxLines="5"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Image"/>
+            <Button
+                android:id="@+id/btn_pilihGambar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Image"/>
+            <ImageView
+                android:id="@+id/imageViewPromo"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"/>
 
         </LinearLayout>
     </ScrollView>

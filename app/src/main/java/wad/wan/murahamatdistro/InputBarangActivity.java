@@ -1,11 +1,14 @@
 package wad.wan.murahamatdistro;
 
+import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -20,12 +23,15 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,29 +45,26 @@ import java.util.List;
 import java.util.Map;
 
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.data.DataKategori;
-import wad.wan.murahamatdistro.url.Url;
+import wad.wan.murahamatdistro.data.Category;
 
 public class InputBarangActivity extends AppCompatActivity {
-    EditText text_nama_brg,text_harga,text_ukuran,text_stock,text_merek,text_deskripsi,text_kategori;
-//    String nama_brg,ukuran,harga,id_kategori,merek,stock,deskripsi;
+    EditText text_nama_brg,text_harga1,text_harga2,text_harga3,text_harga4,text_harga5,text_harga6,text_ukuran,text_stock,text_merek,text_deskripsi,text_kategori;
+    String nama_brg,ukuran,harga1,harga2,harga3,harga4,harga5,harga6,id_kategori,merek,stock,deskripsi;
     Button btn_simpan;
     private ProgressDialog progressDialog;
-    int success;
     Spinner spinner;
-    ImageView imageView;
+    ImageView imageView1,imageView2,imageView3,imageView4,imageView5,imageView6;
     Bitmap bitmap;
+    String status;
     int PICK_IMAGE_REQUEST = 1;
-    public static final String TAG_SUCCESS ="success";
-    public static final String TAG_MESSAGE ="message";
-    private static String url_insert = Url.URL_BARANG_SAVE;
-    private static String url_kategori = Url.URL_KATEGORI;
-
+    private static final int MY_PERMISSIONS_REQUEST_READ_MEDIA = 1111;
+    private static String url_insert = "http://192.168.43.174/mrmht/public/api/product";
+    private static String url_kategori = "http://192.168.43.174/mrmht/public/api/category";
 
     private static final String TAG = InputBarangActivity.class.getSimpleName();
 
     private ArrayList<String> arrkategori;
-    List<DataKategori> listKategori = new ArrayList<DataKategori>();
+    List<Category> listKategori = new ArrayList<Category>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,19 +72,73 @@ public class InputBarangActivity extends AppCompatActivity {
         setContentView(R.layout.activity_input_barang);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("Input Barang");
+        getSupportActionBar().setTitle("Add Product");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Please wait...");
 
         text_nama_brg = (EditText) findViewById(R.id.edittext_namaBarang);
         text_kategori = (EditText) findViewById(R.id.edittext_kategori);
         text_ukuran = (EditText) findViewById(R.id.edittext_ukuran);
-        text_harga = (EditText) findViewById(R.id.edittext_harga);
+        text_harga1 = (EditText) findViewById(R.id.edittext_harga1);
+        text_harga2 = (EditText) findViewById(R.id.edittext_harga2);
+        text_harga3 = (EditText) findViewById(R.id.edittext_harga3);
+        text_harga4 = (EditText) findViewById(R.id.edittext_harga4);
+        text_harga5 = (EditText) findViewById(R.id.edittext_harga5);
+        text_harga6 = (EditText) findViewById(R.id.edittext_harga6);
         text_merek = (EditText) findViewById(R.id.edittext_merek);
         text_deskripsi = (EditText) findViewById(R.id.edittext_deskripsi);
         text_stock = (EditText) findViewById(R.id.edittext_jumlahstock);
-        imageView = (ImageView) findViewById(R.id.gambar_barang);
-        imageView.setOnClickListener(new View.OnClickListener() {
+        imageView1 = (ImageView) findViewById(R.id.imageView1);
+        imageView2 = (ImageView) findViewById(R.id.imageView2);
+        imageView3 = (ImageView) findViewById(R.id.imageView3);
+        imageView4 = (ImageView) findViewById(R.id.imageView4);
+        imageView5 = (ImageView) findViewById(R.id.imageView5);
+        imageView6 = (ImageView) findViewById(R.id.imageView6);
+
+        imageView2.setVisibility(View.GONE);
+        imageView3.setVisibility(View.GONE);
+        imageView4.setVisibility(View.GONE);
+        imageView5.setVisibility(View.GONE);
+        imageView6.setVisibility(View.GONE);
+
+        cekPermission();
+        imageView1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
+
+        imageView2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
+
+        imageView3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
+
+        imageView4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
+
+        imageView4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
+
+        imageView6.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showFileChooser();
@@ -92,8 +149,7 @@ public class InputBarangActivity extends AppCompatActivity {
         btn_simpan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                simpan();
-                inputBarang();
+                save();
             }
         });
 
@@ -105,7 +161,6 @@ public class InputBarangActivity extends AppCompatActivity {
                 text_kategori.setText(listKategori.get(position).getId());
             }
 
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 text_kategori.setText(null);
@@ -113,6 +168,34 @@ public class InputBarangActivity extends AppCompatActivity {
         });
         callKategori();
     }
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if(resultCode == RESULT_OK){
+//            if(requestCode == GALLERY_REQUEST){
+//                galleryPhoto.setPhotoUri(data.getData());
+//                String photoPath = galleryPhoto.getPath();
+//                Log.d(TAG, photoPath);
+//                try {
+//                    Bitmap bitmap = PhotoLoader.init().from(photoPath).requestSize(512,512).getBitmap();
+//                    ImageView imageView = new ImageView(getApplicationContext());
+//                    LinearLayout.LayoutParams layoutParams =
+//                            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                                    ViewGroup.LayoutParams.MATCH_PARENT);
+//                    imageView.setLayoutParams(layoutParams);
+//                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+//                    imageView.setPadding(0,0,0,0);
+//                    imageView.setAdjustViewBounds(true);
+//                    imageView.setImageBitmap(bitmap);
+//                    linearMain.addView(imageView);
+//
+//                } catch (FileNotFoundException e) {
+//                    Toast.makeText(getApplicationContext(),"Error while loading image",Toast.LENGTH_LONG).show();
+//                }
+//            }
+//        }
+//    }
+
 
     private void callKategori(){
 
@@ -126,12 +209,12 @@ public class InputBarangActivity extends AppCompatActivity {
                     try {
                         JSONObject obj = response.getJSONObject(i);
 
-                        DataKategori item = new DataKategori();
+                        Category item = new Category();
                         item.setId(obj.getString("id"));
-                        item.setKategori(obj.getString("kategori"));
+                        item.setName(obj.getString("name"));
                         listKategori.add(item);
 
-                        arrkategori.add(obj.getString("kategori"));
+                        arrkategori.add(obj.getString("name"));
                         spinner.setAdapter(new ArrayAdapter<String>(InputBarangActivity.this, android.R.layout.simple_spinner_dropdown_item, arrkategori));
                     }catch (JSONException e){
                         e.printStackTrace();
@@ -149,41 +232,58 @@ public class InputBarangActivity extends AppCompatActivity {
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
     }
 
-    private void kosong(){
-        text_nama_brg.setText(null);
-        text_kategori.setText(null);
-        text_ukuran.setText(null);
-        text_harga.setText(null);
-        text_merek.setText(null);
-        text_deskripsi.setText(null);
-        text_stock.setText(null);
-        imageView.setImageResource(0);
-    }
+    private void save(){
+        RequestQueue queue= Volley.newRequestQueue(this);
+        progressDialog.show();
+        nama_brg = text_nama_brg.getText().toString();
+        deskripsi = text_deskripsi.getText().toString();
+        merek = text_merek.getText().toString();
+        ukuran = text_ukuran.getText().toString();
+        stock = text_stock.getText().toString();
+        harga1 = text_harga1.getText().toString();
+        harga2 = text_harga2.getText().toString();
+        harga3 = text_harga3.getText().toString();
+        harga4 = text_harga4.getText().toString();
+        harga5 = text_harga5.getText().toString();
+        harga6 = text_harga6.getText().toString();
+        id_kategori = text_kategori.getText().toString();
+//        deskripsi = text_deskripsi.getText().toString();
 
-    private void simpan(){
-        final String nama_brg = text_nama_brg.getText().toString().trim();
-        final String kategori = text_kategori.getText().toString().trim();
-        final String ukuran = text_ukuran.getText().toString().trim();
-        final String harga = text_harga.getText().toString().trim();
-        final String stock = text_stock.getText().toString().trim();
-        final String merek = text_merek.getText().toString().trim();
-        final String deskripsi = text_deskripsi.getText().toString().trim();
+        Map<String, String> jsonParams = new HashMap<String, String>();
+        jsonParams.put("name",nama_brg);
+        jsonParams.put("description",deskripsi);
+        jsonParams.put("merk",merek);
+        jsonParams.put("size",ukuran);
+        jsonParams.put("stock",stock);
+        jsonParams.put("price1",harga1);
+        jsonParams.put("price2",harga2);
+        jsonParams.put("price3",harga3);
+        jsonParams.put("price4",harga4);
+        jsonParams.put("price5",harga5);
+        jsonParams.put("price6",harga6);
+        jsonParams.put("category_id",id_kategori);
+        jsonParams.put("image1",getStringImage(bitmap));
+        Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
 
-        StringRequest strReq=new StringRequest(Request.Method.POST, url_insert, new Response.Listener<String>() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST, url_insert, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Response:" + response.toString());
+            public void onResponse(JSONObject response) {
+                progressDialog.dismiss();
                 try {
-                    JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
-
-                    if (success == 1) {
-                        Log.d("add", jObj.toString());
+                    Log.d("save", response.toString());
+                    status = response.getString("status");
+                    if(status.equals("ok")){
                         kosong();
-                        Toast.makeText(InputBarangActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(InputBarangActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        InputBarangActivity.this.finish();
+//                        ((MainActivity)getApplicationContext()).callVolley();
+//                        MainActivity ac = new MainActivity();
+//                        ac.callVolley();
+                        Toast.makeText(InputBarangActivity.this, "Success saved product",Toast.LENGTH_LONG).show();
+                    }else{
+                        Toast.makeText(InputBarangActivity.this, "Failed saved product",Toast.LENGTH_LONG).show();
                     }
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -192,86 +292,46 @@ public class InputBarangActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG,"Error"+ error.getMessage());
-                Toast.makeText(InputBarangActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.hide();
+                Toast.makeText(InputBarangActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
             }
         }){
             @Override
-            protected Map<String,String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                    params.put("nama_barang",nama_brg);
-                    params.put("id_kategori",kategori);
-                    params.put("harga",harga);
-                    params.put("stock",stock);
-                    params.put("ukuran",ukuran);
-                    params.put("merek",merek);
-                    params.put("deskripsi",deskripsi);
-                    params.put("gambar",getStringImage(bitmap));
-                return params;
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String,String>();
+                return headers;
             }
-        };
-        RequestHandler.getInstance(this).addToRequestQueue(strReq);
-    }
 
-    private void inputBarang() {
-        final String nama_brg = text_nama_brg.getText().toString().trim();
-        final String kategori = text_kategori.getText().toString().trim();
-        final String ukuran = text_ukuran.getText().toString().trim();
-        final String harga = text_harga.getText().toString().trim();
-        final String stock = text_stock.getText().toString().trim();
-        final String merek = text_merek.getText().toString().trim();
-        final String deskripsi = text_deskripsi.getText().toString().trim();
-
-        progressDialog.setMessage("Wait ...");
-        progressDialog.show();
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url_insert,
-                new Response.Listener<String>(){
-                    @Override
-                    public void onResponse(String response){
-                        progressDialog.dismiss();
-                        Log.d(TAG,"Response:" + response.toString());
-                        try {
-                            JSONObject jObj = new JSONObject(response);
-                            success = jObj.getInt(TAG_SUCCESS);
-
-                            if (success == 1) {
-                                Log.d("register", jObj.toString());
-                                kosong();
-                                Toast.makeText(InputBarangActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(InputBarangActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                new Response.ErrorListener(){
-                    @Override
-                    public void onErrorResponse(VolleyError error){
-                        progressDialog.hide();
-                        Log.d(TAG,"Error"+ error.getMessage());
-                        Toast.makeText(InputBarangActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
-                    }
-                }
-        ){
             @Override
-            protected Map<String,String> getParams(){
-                HashMap<String,String> params = new HashMap<>();
-                params.put("nama_barang",nama_brg);
-                params.put("id_kategori",kategori);
-                params.put("harga",harga);
-                params.put("stock",stock);
-                params.put("ukuran",ukuran);
-                params.put("merek",merek);
-                params.put("deskripsi",deskripsi);
-                params.put("gambar",getStringImage(bitmap));
-                return params;
+            public String getBodyContentType() {
+                return "application/json";
             }
         };
-        RequestHandler.getInstance(this).addToRequestQueue(stringRequest);
+        queue.add(jsonObjectRequest);
 
     }
 
+    private void kosong(){
+        text_nama_brg.setText(null);
+        text_kategori.setText(null);
+        text_ukuran.setText(null);
+        text_harga1.setText(null);
+        text_harga2.setText(null);
+        text_harga3.setText(null);
+        text_harga4.setText(null);
+        text_harga5.setText(null);
+        text_harga6.setText(null);
+        text_merek.setText(null);
+        text_deskripsi.setText(null);
+        text_stock.setText(null);
+        imageView1.setImageResource(0);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp(){
+        finish();
+        return true;
+    }
 
 
     public String getStringImage (Bitmap bmp){
@@ -287,7 +347,6 @@ public class InputBarangActivity extends AppCompatActivity {
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent,"Select Picture"), PICK_IMAGE_REQUEST);
-
     }
 
     @Override
@@ -298,16 +357,72 @@ public class InputBarangActivity extends AppCompatActivity {
             Uri filePatch = data.getData();
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
-                imageView.setImageBitmap(bitmap);
+
+                if(bitmap!=null){
+                        imageView1.setImageBitmap(bitmap);
+
+//                        imageView2.setImageBitmap(bitmap);
+//
+//                        imageView3.setImageBitmap(bitmap);
+//
+//                        imageView4.setImageBitmap(bitmap);
+//
+//                        imageView5.setImageBitmap(bitmap);
+//
+//                        imageView6.setImageBitmap(bitmap);
+                }else {
+                    bitmap=null;
+                }
             }catch (IOException e){
                 e.printStackTrace();
             }
         }
     }
 
+    public void cekPermission(){
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                // Show an expanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_READ_MEDIA);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
+
+    }
+
     @Override
-    public boolean onSupportNavigateUp(){
-        finish();
-        return true;
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_MEDIA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+        }
     }
 }

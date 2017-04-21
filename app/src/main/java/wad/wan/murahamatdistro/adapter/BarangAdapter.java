@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -14,24 +15,39 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.NetworkImageView;
+import com.android.volley.toolbox.StringRequest;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
 import wad.wan.murahamatdistro.DetailBarangActivity;
+import wad.wan.murahamatdistro.MainActivity;
 import wad.wan.murahamatdistro.R;
 import wad.wan.murahamatdistro.app.AppController;
+import wad.wan.murahamatdistro.app.RequestHandler;
 import wad.wan.murahamatdistro.data.DataBarang;
+import wad.wan.murahamatdistro.data.Products;
 
 /**
  * Created by user on 18/03/2017.
  */
 public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHolder>{
     private Context mContext;
-    private List<DataBarang> albumList;
-    private static final String TAG = "Barang";
+    private List<Products> albumList;
     ImageLoader imageLoader = AppController.geInstance().getImageLoader();
+
+    String status;
+    private static String url = "http://192.168.43.174/mrmht/public/api/product";
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView title, count,id;
@@ -50,7 +66,7 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
     }
 
 
-    public BarangAdapter(Context mContext, List<DataBarang> albumList) {
+    public BarangAdapter(Context mContext, List<Products> albumList) {
         this.mContext = mContext;
         this.albumList = albumList;
     }
@@ -65,44 +81,25 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, final int position) {
-        final DataBarang album = albumList.get(position);
-        holder.id.setText(album.getId());
-        holder.title.setText(album.getNama_barang());
-        holder.count.setText(album.getMerek());
-        holder.thumbnail.setImageUrl(album.getGambar(),imageLoader);
+        final Products products = albumList.get(position);
+        holder.id.setText(products.getId());
+        holder.title.setText(products.getName());
+        holder.count.setText(products.getMerk());
+        holder.thumbnail.setImageUrl(products.getImage1(),imageLoader);
 
         holder.overflow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showPopupMenu(holder.overflow, album.getId());
+                showPopupMenu(holder.overflow, products.getId());
             }
         });
         holder.thumbnail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String idx = album.getId();
-                final String namax = album.getNama_barang();
-                final String ukuranx = album.getUkuran();
-                final String id_kategorix = album.getId_kategori();
-                final String kategorix = album.getKategori();
-                final String stockx = album.getStock();
-                final String hargax = album.getHarga();
-                final String merekx = album.getMerek();
-                final String deskripsix = album.getDeskripsi();
-                final String gambarx = album.getGambar();
+                final String idx = products.getId();
                 Bundle bn = new Bundle();
                 bn.putString("id", idx);
-                bn.putString("nama",namax);
-                bn.putString("ukuran",ukuranx);
-                bn.putString("id_kategori",id_kategorix);
-                bn.putString("kategori",kategorix);
-                bn.putString("stock", stockx);
-                bn.putString("harga",hargax);
-                bn.putString("merek",merekx);
-                bn.putString("deskripsi",deskripsix);
-                bn.putString("gambar",gambarx);
-//                Toast.makeText(mContext, "click "+album.getId(), Toast.LENGTH_SHORT).show();
-//                Intent intent = new Intent(mContext, DetailBarangActivity.class);
+
                 v.getContext().startActivity(new Intent(mContext, DetailBarangActivity.class).putExtras(bn));
 
             }
@@ -132,13 +129,11 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
 
         @Override
         public boolean onMenuItemClick(MenuItem menuItem) {
-            //final DataTestimonial album = albumList.get();
+
             switch (menuItem.getItemId()) {
-//                case R.id.action_edit:
-//                    Toast.makeText(mContext, "Edit "+id, Toast.LENGTH_SHORT).show();
-//                    return true;
                 case R.id.action_delete:
-                    Toast.makeText(mContext, "Delete", Toast.LENGTH_SHORT).show();
+                    delete(id);
+//                    ((MainActivity)mContext).callVolley();
                     return true;
                 default:
             }
@@ -149,6 +144,38 @@ public class BarangAdapter extends RecyclerView.Adapter<BarangAdapter.MyViewHold
     @Override
     public int getItemCount() {
         return albumList.size();
+    }
+
+    public void delete(final String idx){
+        StringRequest strReq = new StringRequest(
+                Request.Method.DELETE, url +"/"+ idx, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+//                Log.d(TAG,"Response:" + response.toString());
+                try{
+                    JSONObject jObj = new JSONObject(response);
+                    status = jObj.getString("status");
+                    if(status.equals("ok")){
+//                        callVolley();
+                        ((MainActivity)mContext).callVolley();
+                        Toast.makeText(mContext, "Success delete product",Toast.LENGTH_LONG).show();
+//                        adapter.notifyDataSetChanged();
+                    }else {
+                        Toast.makeText(mContext, "Failed delete product",Toast.LENGTH_LONG).show();
+                    }
+
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener(){
+            @Override
+            public void onErrorResponse(VolleyError error){
+//                Log.e(TAG,"Error" + error.getMessage());
+                Toast.makeText(mContext, "Failed Connect to server",Toast.LENGTH_LONG).show();
+            }
+        });
+        RequestHandler.getInstance(mContext).addToRequestQueue(strReq);
     }
 
 }

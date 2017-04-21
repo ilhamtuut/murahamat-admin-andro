@@ -37,4 +37,11 @@ public class Url {
     public static final String URL_TESTIMONIAL_SAVE = "http://192.168.43.174/murahamat/testimonial/insert";
     public static final String URL_TESTIMONIAL_UPDATE = "http://192.168.43.174/murahamat/testimonial/update";
     public static final String URL_TESTIMONIAL_DELETE = "http://192.168.43.174/murahamat/testimonial/delete";
+
+    //TRANSAKSI
+    public static final String URL_TRANSAKSI = "http://192.168.43.174/murahamat/transaksi/data";
+    public static final String URL_TRANSAKSI_ID = "http://192.168.43.174/murahamat/transaksi/data_byid";
+    public static final String URL_TRANSAKSI_SAVE = "http://192.168.43.174/murahamat/transaksi/insert";
+    public static final String URL_TRANSAKSI_UPDATE = "http://192.168.43.174/murahamat/transaksi/update";
+    public static final String URL_TRANSAKSI_DELETE = "http://192.168.43.174/murahamat/transaksi/delete";
 }

@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -16,13 +17,17 @@ import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -30,9 +35,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.NetworkImageView;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,9 +56,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import wad.wan.murahamatdistro.adapter.KategoriAdapter;
 import wad.wan.murahamatdistro.adapter.TestimonialAdapter;
 import wad.wan.murahamatdistro.app.AppController;
 import wad.wan.murahamatdistro.app.RequestHandler;
+import wad.wan.murahamatdistro.data.Category;
 import wad.wan.murahamatdistro.data.DataTestimonial;
 import wad.wan.murahamatdistro.url.Url;
 
@@ -66,31 +75,18 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
     LayoutInflater inflater;
     View dialogView;
     EditText text_id,text_nama,text_deskripsi;
-    String id,nama,deskripsi,gambar;
+    String id,nama,deskripsi,gambar,status;
     NetworkImageView networkImageView;
+    Button btn_pilihGambar;
     ImageView imageView;
     ImageLoader imageLoader = AppController.geInstance().getImageLoader();
-
+    MaterialSearchView searchView;
     Bitmap bitmap;
-    int success;
     int PICK_IMAGE_REQUEST = 1;
 
     private static final String TAG = TestimonialActivity.class.getSimpleName();
+    private static String url_testi = "http://192.168.43.174/mrmht/public/api/testimonial";
 
-    private static String url_select = Url.URL_TESTIMONIAL;
-    private static String url_insert = Url.URL_TESTIMONIAL_SAVE;
-    private static String url_update = Url.URL_TESTIMONIAL_UPDATE;
-    private static String url_delete = Url.URL_TESTIMONIAL_DELETE;
-    private static String url_edit = Url.URL_TESTIMONIAL_ID;
-
-    public static final String TAG_ID ="id";
-    public static final String TAG_NAMA ="nama";
-    public static final String TAG_DESKRIPSI ="deskripsi";
-    public static final String TAG_GAMBAR ="gambar";
-    public static final String TAG_SUCCESS ="success";
-    public static final String TAG_MESSAGE ="message";
-
-    String tag_json_obj = "json_obj_req";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,8 +94,10 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Testimonial");
+        toolbar.setTitleTextColor(Color.parseColor("#FFFFFF"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        searchView = (MaterialSearchView) findViewById(R.id.searchView);
         fab =(FloatingActionButton) findViewById(R.id.fabs);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
         list = (ListView) findViewById(R.id.list);
@@ -121,7 +119,7 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DialogForm("","","","","SIMPAN");
+                DialogForm("","","","","Save");
             }
         });
 
@@ -129,9 +127,9 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, View view,final int position, long id) {
                 final String idx = itemList.get(position).getId();
-                final String namax = itemList.get(position).getNama();
-                final String deskripsix = itemList.get(position).getDeskripsi();
-                final String gambarx = itemList.get(position).getGambar();
+                final String namax = itemList.get(position).getName();
+                final String deskripsix = itemList.get(position).getTesti();
+                final String gambarx = itemList.get(position).getImage();
                 final CharSequence[] dialogitem = {"View","Edit","Delete"};
                 dialog = new AlertDialog.Builder(TestimonialActivity.this);
                 dialog.setCancelable(true);
@@ -162,8 +160,59 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                 return false;
             }
         });
+
+
+        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
+            @Override
+            public void onSearchViewShown() {
+
+            }
+
+            @Override
+            public void onSearchViewClosed() {
+                adapter = new TestimonialAdapter(TestimonialActivity.this, itemList);
+                list.setAdapter(adapter);
+//                callVolley();
+            }
+        });
+
+
+        searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(newText!=null&&!newText.isEmpty()){
+                    List<DataTestimonial> productses = new ArrayList<DataTestimonial>();
+                    for(DataTestimonial item:itemList){
+                        if (item.getName().contains(newText)){
+                            productses.add(item);
+                        }
+                        adapter = new TestimonialAdapter(TestimonialActivity.this, productses);
+                        list.setAdapter(adapter);
+                    }
+                }else {
+                    adapter = new TestimonialAdapter(TestimonialActivity.this, itemList);
+                    list.setAdapter(adapter);
+//                    callVolley();
+                }
+                return false;
+            }
+        });
+
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        MenuItem item = menu.findItem(R.id.search);
+        searchView.setMenuItem(item);
+        return true;
+    }
 
     @Override
     public void onRefresh(){
@@ -179,7 +228,7 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         imageView.setImageResource(0);
     }
 
-    private void DialogForm(String idx, String namax, String deskripsix,String gambarx, String button){
+    private void DialogForm(String idx, String namax, String gambarx,String deskripsix, String button){
         dialog = new AlertDialog.Builder(TestimonialActivity.this);
         inflater = getLayoutInflater();
         dialogView = inflater.inflate(R.layout.form_testimonial,null);
@@ -192,7 +241,8 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         text_nama = (EditText) dialogView.findViewById(R.id.edittext_nama);
         text_deskripsi = (EditText) dialogView.findViewById(R.id.edittext_deskripsi);
         imageView = (ImageView) dialogView.findViewById(R.id.gambar_resi);
-        imageView.setOnClickListener(new View.OnClickListener() {
+        btn_pilihGambar = (Button) dialogView.findViewById(R.id.btn_pilihGambar);
+        btn_pilihGambar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showFileChooser();
@@ -225,7 +275,7 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
 
         });
 
-        dialog.setNegativeButton("Batal",new DialogInterface.OnClickListener(){
+        dialog.setNegativeButton("Cancel",new DialogInterface.OnClickListener(){
             @Override
             public void onClick(DialogInterface dialog, int which){
                 dialog.dismiss();
@@ -240,7 +290,7 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
 
-        JsonArrayRequest jArr = new JsonArrayRequest(url_select, new Response.Listener<JSONArray>(){
+        JsonArrayRequest jArr = new JsonArrayRequest(url_testi, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
@@ -251,10 +301,10 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                         JSONObject obj = response.getJSONObject(i);
 
                         DataTestimonial item = new DataTestimonial();
-                        item.setId(obj.getString(TAG_ID));
-                        item.setNama(obj.getString(TAG_NAMA));
-                        item.setDeskripsi(obj.getString(TAG_DESKRIPSI));
-                        item.setGambar(obj.getString(TAG_GAMBAR));
+                        item.setId(obj.getString("id"));
+                        item.setName(obj.getString("name"));
+                        item.setImage(obj.getString("image"));
+                        item.setTesti(obj.getString("testi"));
 
                         itemList.add(item);
 
@@ -276,82 +326,123 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
     }
 
     private void simpan_update(){
-        String url;
         if(id.isEmpty()){
-            url = url_insert;
-        }else {
-            url = url_update;
-        }
+            RequestQueue queue= Volley.newRequestQueue(this);
 
-        StringRequest strReq=new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Response:" + response.toString());
-                try {
-                    JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
+            Map<String, String> jsonParams = new HashMap<String, String>();
+            jsonParams.put("name",nama);
+            jsonParams.put("image",getStringImage(bitmap));
+            jsonParams.put("testi",deskripsi);
+            Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
 
-                    if (success == 1) {
-                        Log.d("add/update", jObj.toString());
-                        callVolley();
-                        kosong();
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.POST, url_testi, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
 
-                        Toast.makeText(TestimonialActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                        adapter.notifyDataSetChanged();
-                    } else {
-                        Toast.makeText(TestimonialActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                    try {
+                        Log.d("save", response.toString());
+                        status = response.getString("status");
+                        if(status.equals("ok")){
+                            callVolley();
+                            kosong();
+                            Toast.makeText(TestimonialActivity.this, "Success saved testimonial",Toast.LENGTH_LONG).show();
+                            adapter.notifyDataSetChanged();
+
+                        }else{
+                            Toast.makeText(TestimonialActivity.this, "Failed saved testimonial",Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+
                 }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG,"Error"+ error.getMessage());
-                Toast.makeText(TestimonialActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
-            }
-        }){
-            @Override
-            protected Map<String,String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                if(id.isEmpty()){
-                    params.put("nama",nama);
-                    params.put("deskripsi",deskripsi);
-                    params.put("gambar",getStringImage(bitmap));
-                }else {
-                    params.put("id",id);
-                    params.put("nama",nama);
-                    params.put("deskripsi",deskripsi);
-                    params.put("gambar",getStringImage(bitmap));
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(TAG,"Error"+ error.getMessage());
+                    Toast.makeText(TestimonialActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
                 }
-                return params;
-            }
-        };
-        RequestHandler.getInstance(this).addToRequestQueue(strReq);
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String,String>();
+                    return headers;
+                }
+
+                @Override
+                public String getBodyContentType() {
+                    return "application/json";
+                }
+            };
+            queue.add(jsonObjectRequest);
+        }else {
+            RequestQueue queue= Volley.newRequestQueue(this);
+
+            Map<String, String> jsonParams = new HashMap<String, String>();
+            jsonParams.put("name",nama);
+            jsonParams.put("image",getStringImage(bitmap));
+            jsonParams.put("testi",deskripsi);
+            Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.PUT, url_testi+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        Log.d("update", response.toString());
+                        status = response.getString("status");
+                        if(status.equals("ok")){
+                            callVolley();
+                            kosong();
+                            Toast.makeText(TestimonialActivity.this, "Success update testimonial",Toast.LENGTH_LONG).show();
+                            adapter.notifyDataSetChanged();
+
+                        }else{
+                            Toast.makeText(TestimonialActivity.this, "Failed update testimonial",Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(TAG,"Error"+ error.getMessage());
+                    Toast.makeText(TestimonialActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String,String>();
+                    return headers;
+                }
+
+                @Override
+                public String getBodyContentType() {
+                    return "application/json";
+                }
+            };
+            queue.add(jsonObjectRequest);
+        }
     }
 
     private void edit(final String idx){
-        StringRequest strReq = new StringRequest(Request.Method.POST, url_edit, new Response.Listener<String>() {
+        StringRequest strReq = new StringRequest(
+                Request.Method.GET, url_testi+"/"+idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
                 try{
                     JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
 
-                    if(success==1){
-                        Log.d("get edit data", jObj.toString());
-                        String idx = jObj.getString(TAG_ID);
-                        String namax = jObj.getString(TAG_NAMA);
-                        String deskripsix = jObj.getString(TAG_DESKRIPSI);
-                        String gambarx = jObj.getString(TAG_GAMBAR);
+                    Log.d("get edit data", jObj.toString());
+                    String idx = jObj.getString("id");
+                    String namex = jObj.getString("name");
+                    String imagex = jObj.getString("image");
+                    String testix = jObj.getString("testi");
 
-                        DialogForm(idx, namax,deskripsix,gambarx ,"UPDATE");
-                        adapter.notifyDataSetChanged();
-                    }else{
-                        Toast.makeText(TestimonialActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
-                    }
+                    DialogForm(idx, namex,imagex,testix ,"UPDATE");
+                    adapter.notifyDataSetChanged();
                 }catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -360,36 +451,31 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(TestimonialActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(TestimonialActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
             }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("id",idx);
-                return params;
-            }
-        };
+        });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
     private void delete(final String idx){
-        StringRequest strReq = new StringRequest(Request.Method.POST, url_delete, new Response.Listener<String>() {
+        StringRequest strReq = new StringRequest(
+                Request.Method.DELETE, url_testi +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
                 try{
                     JSONObject jObj = new JSONObject(response);
-                    success = jObj.getInt(TAG_SUCCESS);
-
-                    if(success==1){
-                        Log.d("delete", jObj.toString());
+                    status = jObj.getString("status");
+                    if(status.equals("ok")){
                         callVolley();
-                        Toast.makeText(TestimonialActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        kosong();
+                        Toast.makeText(TestimonialActivity.this, "Success delete testimonial",Toast.LENGTH_LONG).show();
                         adapter.notifyDataSetChanged();
+
                     }else{
-                        Toast.makeText(TestimonialActivity.this, jObj.getString(TAG_MESSAGE),Toast.LENGTH_LONG).show();
+                        Toast.makeText(TestimonialActivity.this, "Failed delete testimonial",Toast.LENGTH_LONG).show();
                     }
+
                 }catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -398,16 +484,9 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(TestimonialActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                Toast.makeText(TestimonialActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
             }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("id",idx);
-                return params;
-            }
-        };
+        });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 

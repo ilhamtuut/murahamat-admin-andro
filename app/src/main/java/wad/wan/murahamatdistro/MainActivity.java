@@ -1,13 +1,19 @@
 package wad.wan.murahamatdistro;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.PopupMenu;
@@ -28,10 +34,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,20 +54,19 @@ import wad.wan.murahamatdistro.app.RequestHandler;
 import wad.wan.murahamatdistro.app.SharedPreManager;
 import wad.wan.murahamatdistro.data.DataBarang;
 import wad.wan.murahamatdistro.data.DataTestimonial;
+import wad.wan.murahamatdistro.data.Products;
 import wad.wan.murahamatdistro.url.Url;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private RecyclerView recyclerView;
-    private BarangAdapter adapter;
-    private List<DataBarang> itemList;
-    SwipeRefreshLayout swipe;
+    public BarangAdapter adapter;
+    public List<Products> itemList;
+    public SwipeRefreshLayout swipe;
     private String level="admin";
-
+    String status;
     private static final String TAG = MainActivity.class.getSimpleName();
-
-    private static String url_select = Url.URL_BARANG;
-//    private static String url_select = Url.URL_TESTIMONIAL;
+    private static String url = "http://192.168.43.174/mrmht/public/api/product";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,11 +75,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if(!SharedPreManager.getInstance(this).isLoggedIn()){
-            finish();
-            startActivity(new Intent(this,LoginActivity.class));
-        }
-        //level = SharedPreManager.getInstance(this).getLevel();
+//        if(!SharedPreManager.getInstance(this).isLoggedIn()){
+//            finish();
+//            startActivity(new Intent(this,LoginActivity.class));
+//        }
 
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
         swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -114,8 +120,29 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.setNavigationItemSelectedListener(this);
 
         Menu nav_Menu = navigationView.getMenu();
-        if(!SharedPreManager.getInstance(this).getLevel().equals("admin")){
+//        if(!SharedPreManager.getInstance(this).getLevel().equals("admin")){
             nav_Menu.findItem(R.id.nav_usermanage).setVisible(false);
+//        }
+
+        if (cek_status(this)) {
+
+        }else{
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("You are not connected internet. Please, connect first")
+                    .setCancelable(false)
+                    .setPositiveButton("Ya", new DialogInterface.OnClickListener() {
+                        public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                            startActivity(new Intent(Settings.ACTION_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Tidak", new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                            dialog.cancel();
+                            MainActivity.this.finish();
+                        }
+                    });
+            final AlertDialog alert = builder.create();
+            alert.show();
         }
 
     }
@@ -152,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(new Intent(this,LoginActivity.class));
             return true;
         }else if (id == R.id.action_search) {
+            startActivity(new Intent(this,Search.class));
             return true;
         }
 
@@ -175,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(new Intent(MainActivity.this,KategoriActivity.class));
         } else if (id == R.id.nav_promo) {
             startActivity(new Intent(MainActivity.this,PromoActivity.class));
+//            startActivity(new Intent(MainActivity.this,ImageSlide.class));
         } else if (id == R.id.nav_testimonial) {
             startActivity(new Intent(MainActivity.this,TestimonialActivity.class));
         } else if (id == R.id.nav_transaksi) {
@@ -188,12 +217,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-    private void callVolley(){
+    public void callVolley(){
         itemList.clear();
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
 
-        JsonArrayRequest jArr = new JsonArrayRequest(url_select, new Response.Listener<JSONArray>(){
+        JsonArrayRequest jArr = new JsonArrayRequest(url, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
@@ -203,16 +232,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     try {
                         JSONObject obj = response.getJSONObject(i);
 
-                        DataBarang item = new DataBarang();
+                        Products item = new Products();
                         item.setId(obj.getString("id"));
-                        item.setNama_barang(obj.getString("nama_barang"));
-                        item.setDeskripsi(obj.getString("deskripsi"));
-                        item.setGambar(obj.getString("gambar"));
-                        item.setMerek(obj.getString("merek"));
+                        item.setName(obj.getString("name"));
+                        item.setDescription(obj.getString("description"));
+//                        item.setGambar(obj.getString("gambar"));
+                        item.setMerk(obj.getString("merk"));
                         item.setStock(obj.getString("stock"));
-                        item.setUkuran(obj.getString("ukuran"));
-                        item.setHarga(obj.getString("harga"));
-                        item.setId_kategori(obj.getString("kategori"));
+                        item.setSize(obj.getString("size"));
+                        item.setPrice1(obj.getString("price1"));
+                        item.setPrice2(obj.getString("price2"));
+                        item.setPrice3(obj.getString("price3"));
+                        item.setPrice4(obj.getString("price4"));
+                        item.setPrice5(obj.getString("price5"));
+                        item.setPrice6(obj.getString("price6"));
+                        item.setImage1(obj.getString("image1"));
+                        item.setImage2(obj.getString("image2"));
+                        item.setImage3(obj.getString("image3"));
+                        item.setImage4(obj.getString("image4"));
+                        item.setImage5(obj.getString("image5"));
+                        item.setImage6(obj.getString("image6"));
+                        item.setCategory_id(obj.getString("category_id"));
 
 
                         itemList.add(item);
@@ -233,6 +273,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
+    }
+
+    public boolean cek_status(Context cek) {
+        ConnectivityManager cm = (ConnectivityManager) cek.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+
+        if (info != null && info.isConnected()) {
+
+            return true;
+        } else {
+
+            return false;
+        }
     }
 
 }

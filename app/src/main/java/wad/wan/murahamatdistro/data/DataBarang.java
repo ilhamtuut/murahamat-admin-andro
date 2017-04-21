@@ -4,16 +4,21 @@ package wad.wan.murahamatdistro.data;
  * Created by user on 18/03/2017.
  */
 public class DataBarang {
-    public String id,nama_barang,id_kategori,kategori,harga,ukuran,merek,gambar,stock,deskripsi;
+    public String id,nama_barang,id_kategori,kategori,harga1,harga2,harga3,harga4,harga5,harga6,ukuran,merek,gambar,stock,deskripsi;
 
     public DataBarang(){}
 
-    public DataBarang(String id, String nama_barang, String id_kategori,String kategori, String harga, String ukuran, String merek, String gambar, String stock, String deskripsi) {
+    public DataBarang(String id, String nama_barang, String id_kategori,String kategori, String harga1,String harga2,String harga3,String harga4,String harga5,String harga6, String ukuran, String merek, String gambar, String stock, String deskripsi) {
         this.id = id;
         this.nama_barang = nama_barang;
         this.id_kategori = id_kategori;
         this.kategori = kategori;
-        this.harga = harga;
+        this.harga1 = harga1;
+        this.harga2 = harga2;
+        this.harga3 = harga3;
+        this.harga4 = harga4;
+        this.harga5 = harga5;
+        this.harga6 = harga6;
         this.ukuran = ukuran;
         this.merek = merek;
         this.gambar = gambar;
@@ -53,12 +58,52 @@ public class DataBarang {
         this.kategori = kategori;
     }
 
-    public String getHarga() {
-        return harga;
+    public String getHarga1() {
+        return harga1;
     }
 
-    public void setHarga(String harga) {
-        this.harga = harga;
+    public void setHarga1(String harga1) {
+        this.harga1 = harga1;
+    }
+
+    public String getHarga2() {
+        return harga2;
+    }
+
+    public void setHarga2(String harga2) {
+        this.harga2 = harga2;
+    }
+
+    public String getHarga3() {
+        return harga3;
+    }
+
+    public void setHarga3(String harga3) {
+        this.harga3 = harga3;
+    }
+
+    public String getHarga4() {
+        return harga4;
+    }
+
+    public void setHarga4(String harga4) {
+        this.harga4 = harga4;
+    }
+
+    public String getHarga5() {
+        return harga5;
+    }
+
+    public void setHarga5(String harga5) {
+        this.harga5 = harga5;
+    }
+
+    public String getHarga6() {
+        return harga6;
+    }
+
+    public void setHarga6(String harga6) {
+        this.harga6 = harga6;
     }
 
     public String getUkuran() {

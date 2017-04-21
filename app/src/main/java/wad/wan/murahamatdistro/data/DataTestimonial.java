@@ -4,15 +4,25 @@ package wad.wan.murahamatdistro.data;
  * Created by user on 19/03/2017.
  */
 public class DataTestimonial {
-    private String id,nama,deskripsi,gambar;
+    private String id,name,image,testi,created_at,updated_at;
 
     public DataTestimonial(){}
 
-    public DataTestimonial(String id, String nama, String deskripsi, String gambar) {
+    public DataTestimonial(String created_at, String id, String image, String name, String testi, String updated_at) {
+        this.created_at = created_at;
         this.id = id;
-        this.nama = nama;
-        this.deskripsi = deskripsi;
-        this.gambar = gambar;
+        this.image = image;
+        this.name = name;
+        this.testi = testi;
+        this.updated_at = updated_at;
+    }
+
+    public String getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
     }
 
     public String getId() {
@@ -23,27 +33,35 @@ public class DataTestimonial {
         this.id = id;
     }
 
-    public String getNama() {
-        return nama;
+    public String getImage() {
+        return image;
     }
 
-    public void setNama(String nama) {
-        this.nama = nama;
+    public void setImage(String image) {
+        this.image = image;
     }
 
-    public String getDeskripsi() {
-        return deskripsi;
+    public String getName() {
+        return name;
     }
 
-    public void setDeskripsi(String deskripsi) {
-        this.deskripsi = deskripsi;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getGambar() {
-        return gambar;
+    public String getTesti() {
+        return testi;
     }
 
-    public void setGambar(String gambar) {
-        this.gambar = gambar;
+    public void setTesti(String testi) {
+        this.testi = testi;
+    }
+
+    public String getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(String updated_at) {
+        this.updated_at = updated_at;
     }
 }

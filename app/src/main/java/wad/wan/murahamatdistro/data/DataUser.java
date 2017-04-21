@@ -4,13 +4,14 @@ package wad.wan.murahamatdistro.data;
  * Created by user on 19/03/2017.
  */
 public class DataUser {
-    private String id,username,password;
+    private String id,username,email,password;
 
     public DataUser(){}
 
-    public DataUser(String id, String username,String password) {
+    public DataUser(String id, String username,String email,String password) {
         this.id = id;
         this.username = username;
+        this.email = email;
         this.password = password;
     }
 
@@ -36,5 +37,13 @@ public class DataUser {
 
     public void setPassword (String password){
         this.password=password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
