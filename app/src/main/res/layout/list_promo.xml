@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="bold"
-        android:textSize="16dp"
+        android:textSize="16sp"
         android:text="Nama Barang"
         android:layout_toRightOf="@+id/thumbnail"
         android:layout_marginBottom="5dp"/>

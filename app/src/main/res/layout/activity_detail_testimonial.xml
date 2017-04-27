@@ -55,7 +55,7 @@
                     <com.android.volley.toolbox.NetworkImageView
                         android:id="@+id/thumbnail"
                         android:layout_width="match_parent"
-                        android:layout_height="160dp"
+                        android:layout_height="300dp"
                         android:layout_gravity="center"
                         android:scaleType="fitXY"/>
                 </LinearLayout>
@@ -77,6 +77,7 @@
                         android:layout_height="wrap_content"
                         android:text="Nama"
                         android:textStyle="bold"
+                        android:textSize="16sp"
                         android:layout_marginBottom="2dp"/>
                     <TextView
                         android:id="@+id/edittext_nama"
@@ -88,6 +89,7 @@
                         android:layout_marginBottom="2dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textSize="16sp"
                         android:text="Deskripsi"/>
                     <TextView
                         android:id="@+id/edittext_deskripsi"

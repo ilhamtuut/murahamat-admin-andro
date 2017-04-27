@@ -1,45 +1,35 @@
 package wad.wan.murahamatdistro;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.NavUtils;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.PopupMenu;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,13 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import wad.wan.murahamatdistro.adapter.BarangAdapter;
-import wad.wan.murahamatdistro.adapter.TesAdapter;
 import wad.wan.murahamatdistro.app.RequestHandler;
 import wad.wan.murahamatdistro.app.SharedPreManager;
-import wad.wan.murahamatdistro.data.DataBarang;
-import wad.wan.murahamatdistro.data.DataTestimonial;
 import wad.wan.murahamatdistro.data.Products;
-import wad.wan.murahamatdistro.url.Url;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -63,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public BarangAdapter adapter;
     public List<Products> itemList;
     public SwipeRefreshLayout swipe;
+    ProgressDialog progressDialog;
     private String level="admin";
     String status;
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -201,9 +188,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(new Intent(MainActivity.this,InputBarangActivity.class));
         } else if (id == R.id.nav_kategori) {
             startActivity(new Intent(MainActivity.this,KategoriActivity.class));
+//            startActivity(new Intent(MainActivity.this,ImageSlide.class));
         } else if (id == R.id.nav_promo) {
             startActivity(new Intent(MainActivity.this,PromoActivity.class));
-//            startActivity(new Intent(MainActivity.this,ImageSlide.class));
         } else if (id == R.id.nav_testimonial) {
             startActivity(new Intent(MainActivity.this,TestimonialActivity.class));
         } else if (id == R.id.nav_transaksi) {
@@ -221,12 +208,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         itemList.clear();
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
+        progressDialog = ProgressDialog.show(MainActivity.this, "", "Please Wait.....", false);
 
         JsonArrayRequest jArr = new JsonArrayRequest(url, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
                 Log.d(TAG,response.toString());
+
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
 
                 for (int i=0; i<response.length(); i++){
                     try {
@@ -236,7 +231,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         item.setId(obj.getString("id"));
                         item.setName(obj.getString("name"));
                         item.setDescription(obj.getString("description"));
-//                        item.setGambar(obj.getString("gambar"));
                         item.setMerk(obj.getString("merk"));
                         item.setStock(obj.getString("stock"));
                         item.setSize(obj.getString("size"));
@@ -254,7 +248,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         item.setImage6(obj.getString("image6"));
                         item.setCategory_id(obj.getString("category_id"));
 
-
                         itemList.add(item);
 
                     }catch (JSONException e){
@@ -268,7 +261,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onErrorResponse(VolleyError error){
                 VolleyLog.d(TAG,"Error" + error.getMessage());
-                Toast.makeText(MainActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(MainActivity.this, "Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
                 swipe.setRefreshing(false);
             }
         });

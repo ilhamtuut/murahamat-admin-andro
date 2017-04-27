@@ -1,12 +1,13 @@
 package wad.wan.murahamatdistro;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,10 +41,8 @@ import java.util.List;
 import java.util.Map;
 
 import wad.wan.murahamatdistro.adapter.KategoriAdapter;
-import wad.wan.murahamatdistro.adapter.PromosAdapter;
 import wad.wan.murahamatdistro.app.RequestHandler;
 import wad.wan.murahamatdistro.data.Category;
-import wad.wan.murahamatdistro.data.Promo;
 
 public class KategoriActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -59,6 +58,7 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
     EditText text_id,text_kategori;
     String id,kategori,status;
     MaterialSearchView searchView;
+    ProgressDialog progressDialog;
 
     private static final String TAG = KategoriActivity.class.getSimpleName();
     private static String url = "http://192.168.43.174/mrmht/public/api/category";
@@ -215,8 +215,17 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
             public void onClick(DialogInterface dialog, int which){
                 id = text_id.getText().toString();
                 kategori = text_kategori.getText().toString();
-
-                simpan_update();
+                if(!kategori.equals("")){
+                    progressDialog = ProgressDialog.show(KategoriActivity.this, "", "Please Wait.....", false);
+                    Thread thread=new Thread(new Runnable(){
+                        public void run(){
+                            simpan_update();
+                        }
+                    });
+                    thread.start();
+                }else{
+                    Toast.makeText(getApplicationContext(),"Please complete fields.", Toast.LENGTH_SHORT).show();
+                }
                 dialog.dismiss();
             }
 
@@ -236,12 +245,20 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
         itemList.clear();
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
+        progressDialog = ProgressDialog.show(KategoriActivity.this, "", "Please Wait.....", false);
 
         JsonArrayRequest jArr = new JsonArrayRequest(url, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
                 Log.d(TAG,response.toString());
+
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
 
                 for (int i=0; i<response.length(); i++){
                     try {
@@ -265,7 +282,9 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
             @Override
             public void onErrorResponse(VolleyError error){
                 VolleyLog.d(TAG,"Error" + error.getMessage());
+                progressDialog.dismiss();
                 swipe.setRefreshing(false);
+                Toast.makeText(KategoriActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
@@ -284,6 +303,13 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
                     Request.Method.POST, url, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
+
                     try {
                         Log.d("save", response.toString());
                         status = response.getString("status");
@@ -305,7 +331,8 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG,"Error"+ error.getMessage());
-                    Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                    progressDialog.dismiss();
+                    Toast.makeText(KategoriActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
                 }
             }){
                 @Override
@@ -333,6 +360,13 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
                     Request.Method.PUT, url+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
+
                     try {
                         Log.d("update", response.toString());
                         status = response.getString("status");
@@ -353,7 +387,8 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG,"Error"+ error.getMessage());
-                    Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                    progressDialog.dismiss();
+                    Toast.makeText(KategoriActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
                 }
             }){
                 @Override
@@ -373,11 +408,18 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
     }
 
     private void edit(final String idx){
+        progressDialog = ProgressDialog.show(KategoriActivity.this, "", "Please Wait.....", false);
         StringRequest strReq = new StringRequest(
                 Request.Method.GET, url+"/"+idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
                 try{
                     JSONObject jObj = new JSONObject(response);
 
@@ -396,18 +438,27 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(KategoriActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
     private void delete(final String idx){
+        progressDialog = ProgressDialog.show(KategoriActivity.this, "", "Please Wait.....", false);
+
         StringRequest strReq = new StringRequest(
                 Request.Method.DELETE, url +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
                 try{
                     JSONObject jObj = new JSONObject(response);
                     status = jObj.getString("status");
@@ -427,7 +478,8 @@ public class KategoriActivity extends AppCompatActivity implements SwipeRefreshL
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(KategoriActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(KategoriActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);

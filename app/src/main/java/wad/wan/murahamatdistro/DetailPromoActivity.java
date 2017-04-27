@@ -5,9 +5,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
@@ -19,14 +19,11 @@ import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.NetworkImageView;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -39,7 +36,6 @@ import java.util.Map;
 
 import wad.wan.murahamatdistro.app.AppController;
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.url.Url;
 
 public class DetailPromoActivity extends AppCompatActivity {
 
@@ -82,18 +78,11 @@ public class DetailPromoActivity extends AppCompatActivity {
                 showFileChooser();
             }
         });
-//        if(imageLoader == null)
-//            imageLoader = AppController.geInstance().getImageLoader();
-//        niv = (NetworkImageView) findViewById(R.id.thumbnail);
-
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Please wait...");
 
         Bundle b = getIntent().getExtras();
         txt_id.setText(b.getCharSequence("id"));
         txt_nama.setText(b.getCharSequence("nama"));
         txt_deskripsi.setText(b.getCharSequence("deskripsi"));
-//        niv.setImageUrl(b.getString("gambar"),imageLoader);
         Picasso.with(getApplicationContext()).load(b.getString("gambar")).into(imageView);
         btn_update.setVisibility(View.GONE);
         txt_nama.setEnabled(false);
@@ -114,12 +103,23 @@ public class DetailPromoActivity extends AppCompatActivity {
         btn_update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                update();
-                btn_update.setVisibility(View.GONE);
-                txt_nama.setEnabled(false);
-                txt_deskripsi.setEnabled(false);
-                imageView.setEnabled(false);
-                DetailPromoActivity.this.finish();
+                if(bitmap!=null){
+                    progressDialog = ProgressDialog.show(DetailPromoActivity.this, "", "Please Wait.....", false);
+                    Thread thread=new Thread(new Runnable(){
+                        public void run(){
+                            update();
+                        }
+                    });
+                    thread.start();
+
+                    btn_update.setVisibility(View.GONE);
+                    txt_nama.setEnabled(false);
+                    txt_deskripsi.setEnabled(false);
+                    imageView.setEnabled(false);
+
+                }else {
+                    Toast.makeText(getApplicationContext(),"Please complete fields.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -137,12 +137,9 @@ public class DetailPromoActivity extends AppCompatActivity {
     }
 
     private void update(){
-//        progressDialog.show();
         final String id = txt_id.getText().toString().trim();
         final String name = txt_nama.getText().toString().trim();
         final String deskripsi = txt_deskripsi.getText().toString().trim();
-
-        RequestQueue queue= Volley.newRequestQueue(this);
 
         Map<String, String> jsonParams = new HashMap<String, String>();
         jsonParams.put("name",name);
@@ -154,11 +151,19 @@ public class DetailPromoActivity extends AppCompatActivity {
                 Request.Method.PUT, url_promo+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-//                progressDialog.dismiss();
+
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
+
                 try {
                     Log.d("update", response.toString());
                     status = response.getString("status");
                     if(status.equals("ok")){
+                        DetailPromoActivity.this.finish();
                         Toast.makeText(DetailPromoActivity.this, "Success update promo",Toast.LENGTH_LONG).show();
 
                     }else{
@@ -173,8 +178,8 @@ public class DetailPromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG,"Error"+ error.getMessage());
-//                progressDialog.hide();
-                Toast.makeText(DetailPromoActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(DetailPromoActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
@@ -188,7 +193,8 @@ public class DetailPromoActivity extends AppCompatActivity {
                 return "application/json";
             }
         };
-        queue.add(jsonObjectRequest);
+
+        RequestHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
 
 
@@ -215,13 +221,8 @@ public class DetailPromoActivity extends AppCompatActivity {
             Uri filePatch = data.getData();
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                imageView.setImageBitmap(bitmap);
 
-                if(bitmap!=null){
-                    imageView.setImageBitmap(bitmap);
-
-                }else {
-                    bitmap=null;
-                }
             }catch (IOException e){
                 e.printStackTrace();
             }

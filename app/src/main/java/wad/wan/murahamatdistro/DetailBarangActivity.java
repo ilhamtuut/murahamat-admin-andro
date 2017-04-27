@@ -55,7 +55,7 @@ public class DetailBarangActivity extends AppCompatActivity {
     EditText txt_nama,txt_ukuran,txt_kategori,txt_stock,txt_merek,txt_deskripsi;
     LinearLayout linearLayout;
     NetworkImageView niv;
-    ImageView imageView1;
+    ImageView imageView1,imageView2,imageView3,imageView4,imageView5,imageView6;
     Button btn_edit,btn_update,btn_batal;
     Spinner spinner;
     private ProgressDialog progressDialog;
@@ -101,7 +101,13 @@ public class DetailBarangActivity extends AppCompatActivity {
         harga5 = (EditText) findViewById(R.id.harga5);
         harga6 = (EditText) findViewById(R.id.harga6);
 
-        imageView1 = (ImageView) findViewById(R.id.thumbnail);
+        imageView1 = (ImageView) findViewById(R.id.imageView1);
+        imageView2 = (ImageView) findViewById(R.id.imageView2);
+        imageView3 = (ImageView) findViewById(R.id.imageView3);
+        imageView4 = (ImageView) findViewById(R.id.imageView4);
+        imageView5 = (ImageView) findViewById(R.id.imageView5);
+        imageView6 = (ImageView) findViewById(R.id.imageView6);
+
         imageView1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -161,7 +167,13 @@ public class DetailBarangActivity extends AppCompatActivity {
         btn_update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                update();
+                if(bitmap!=null){
+                    progressDialog.show();
+                    update();
+                }else{
+                    Toast.makeText(DetailBarangActivity.this,"Image not selected",Toast.LENGTH_LONG).show();
+                }
+
                 btn_update.setVisibility(View.GONE);
                 txt_nama.setEnabled(false);
                 txt_ukuran.setEnabled(false);
@@ -224,8 +236,6 @@ public class DetailBarangActivity extends AppCompatActivity {
     }
 
     private void update(){
-
-        progressDialog.show();
         final String id = txt_id.getText().toString().trim();
         final String name = txt_nama.getText().toString().trim();
         final String descrition = txt_deskripsi.getText().toString().trim();
@@ -257,6 +267,7 @@ public class DetailBarangActivity extends AppCompatActivity {
         jsonParams.put("category_id",category);
         jsonParams.put("image1",getStringImage(bitmap));
         Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
+//        Log.d(TAG,"img:"+ img);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.PUT, url_product+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
@@ -279,8 +290,8 @@ public class DetailBarangActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG,"Error"+ error.getMessage());
-                progressDialog.hide();
-                Toast.makeText(DetailBarangActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(DetailBarangActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
@@ -322,6 +333,11 @@ public class DetailBarangActivity extends AppCompatActivity {
                     String price5 = jObj.getString("price5");
                     String price6 = jObj.getString("price6");
                     String image1 = jObj.getString("image1");
+                    String image2 = jObj.getString("image2");
+                    String image3 = jObj.getString("image3");
+                    String image4 = jObj.getString("image4");
+                    String image5 = jObj.getString("image5");
+                    String image6 = jObj.getString("image6");
                     String category_id = jObj.getString("category_id");
 
                     txt_id.setText(idx);
@@ -339,6 +355,11 @@ public class DetailBarangActivity extends AppCompatActivity {
                     txt_kategori.setText(category_id);
 //                    niv.setImageUrl(image1,imageLoader);
                     Picasso.with(getApplicationContext()).load(image1).into(imageView1);
+                    Picasso.with(getApplicationContext()).load(image2).into(imageView2);
+                    Picasso.with(getApplicationContext()).load(image3).into(imageView3);
+                    Picasso.with(getApplicationContext()).load(image4).into(imageView4);
+                    Picasso.with(getApplicationContext()).load(image5).into(imageView5);
+                    Picasso.with(getApplicationContext()).load(image6).into(imageView6);
 
                 }catch (JSONException e){
                     e.printStackTrace();
@@ -348,8 +369,8 @@ public class DetailBarangActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                progressDialog.hide();
-                Toast.makeText(DetailBarangActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(DetailBarangActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
@@ -391,11 +412,15 @@ public class DetailBarangActivity extends AppCompatActivity {
     }
 
     public String getStringImage (Bitmap bmp){
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] imageBytes = baos.toByteArray();
-        String encodedIMage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-        return encodedIMage;
+//        if(bmp!=null){
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] imageBytes = baos.toByteArray();
+            String encodedIMage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+            return encodedIMage;
+//        }else{
+//            return null;
+//        }
     }
 
     private void showFileChooser(){
@@ -413,13 +438,7 @@ public class DetailBarangActivity extends AppCompatActivity {
             Uri filePatch = data.getData();
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
-
-                if(bitmap!=null){
-                    imageView1.setImageBitmap(bitmap);
-
-                }else {
-                    bitmap=null;
-                }
+                imageView1.setImageBitmap(bitmap);
             }catch (IOException e){
                 e.printStackTrace();
             }

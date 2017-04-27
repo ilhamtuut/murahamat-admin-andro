@@ -1,21 +1,15 @@
 package wad.wan.murahamatdistro;
 
 import android.app.DatePickerDialog;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -46,10 +39,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import wad.wan.murahamatdistro.adapter.KategoriAdapter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import wad.wan.murahamatdistro.adapter.TransaksiAdapter;
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.data.Category;
 import wad.wan.murahamatdistro.data.Products;
 import wad.wan.murahamatdistro.data.Transaksi;
 
@@ -71,6 +67,7 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
     DatePickerDialog datePickerDialog;
     Spinner spinner;
     MaterialSearchView searchView;
+    ProgressDialog progressDialog;
 
     private static final String TAG = HistoryTransaksiActivity.class.getSimpleName();
     private static String url_transaction = "http://192.168.43.174/mrmht/public/api/transaction";
@@ -116,7 +113,7 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DialogForm("","","","","","","Save");
+                DialogForm("","","","","","Save");
             }
         });
 
@@ -225,7 +222,7 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
 
     }
 
-    private void DialogForm(String idx, String namax,String barangx,String hargax,String jumlahx,String datex,  String button){
+    private void DialogForm(String idx, String namax,String barangx,String jumlahx,String hargax,  String button){
         dialog = new AlertDialog.Builder(HistoryTransaksiActivity.this);
         inflater = getLayoutInflater();
         dialogView = inflater.inflate(R.layout.form_transaksi,null);
@@ -237,33 +234,14 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
         editTextId = (EditText) dialogView.findViewById(R.id.edittext_id);
         editTextnama = (EditText) dialogView.findViewById(R.id.edittext_nama);
         editTextnamaBarang = (EditText) dialogView.findViewById(R.id.id_namaBarang);
-//        editTextdate = (EditText) dialogView.findViewById(R.id.tanggal);
         editTextharga = (EditText) dialogView.findViewById(R.id.harga);
         editTextjumlah = (EditText) dialogView.findViewById(R.id.jumlah);
 
-//        editTextdate.setOnClickListener(new View.OnClickListener() {
+//        editTextnamaBarang.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View v) {
-//                // calender class's instance and get current date , month and year from calender
-//                final Calendar c = Calendar.getInstance();
-//                int mYear = c.get(Calendar.YEAR); // current year
-//                int mMonth = c.get(Calendar.MONTH); // current month
-//                int mDay = c.get(Calendar.DAY_OF_MONTH); // current day
-//                int mTime = c.get(Calendar.HOUR_OF_DAY);
-//                // date picker dialog
-//                datePickerDialog = new DatePickerDialog(HistoryTransaksiActivity.this,
-//                        new DatePickerDialog.OnDateSetListener() {
-//
-//                            @Override
-//                            public void onDateSet(DatePicker view, int year,
-//                                                  int monthOfYear, int dayOfMonth) {
-//                                // set day of month , month and year value in the edit text
-//                                editTextdate.setText( year+ "-"
-//                                        + (monthOfYear + 1) + "-" +  dayOfMonth);
-//
-//                            }
-//                        }, mYear, mMonth, mDay);
-//                datePickerDialog.show();
+//                spinner.setVisibility(View.VISIBLE);
+//               editTextnamaBarang.setVisibility(View.GONE);
 //            }
 //        });
 
@@ -273,6 +251,7 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 editTextnamaBarang.setText(listBarang.get(position).getName());
+//                spinner.setVisibility(View.GONE);
             }
 
             @Override
@@ -286,9 +265,9 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
             editTextId.setText(idx);
             editTextnama.setText(namax);
             editTextnamaBarang.setText(barangx);
-            editTextharga.setText(hargax);
             editTextjumlah.setText(jumlahx);
-//            editTextdate.setText(datex);
+            editTextharga.setText(hargax);
+
 
         }else {
             kosong();
@@ -302,9 +281,17 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
                 namaBarang = editTextnamaBarang.getText().toString();
                 harga = editTextharga.getText().toString();
                 jumlah = editTextjumlah.getText().toString();
-//                date = editTextdate.getText().toString();
-
-                simpan_update();
+                if(!nama.equals("") && !namaBarang.equals("") && !harga.equals("") && !jumlah.equals("")){
+                    progressDialog = ProgressDialog.show(HistoryTransaksiActivity.this, "", "Please Wait.....", false);
+                    Thread thread=new Thread(new Runnable(){
+                        public void run(){
+                            simpan_update();
+                        }
+                    });
+                    thread.start();
+                }else{
+                    Toast.makeText(getApplicationContext(),"Please complete fields.", Toast.LENGTH_SHORT).show();
+                }
                 dialog.dismiss();
             }
 
@@ -354,17 +341,23 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
     }
 
-
     private void callVolley(){
         itemList.clear();
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
+        progressDialog = ProgressDialog.show(HistoryTransaksiActivity.this, "", "Please Wait.....", false);
 
         JsonArrayRequest jArr = new JsonArrayRequest(url_transaction, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
                 Log.d(TAG,response.toString());
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
 
                 for (int i=0; i<response.length(); i++){
                     try {
@@ -392,7 +385,9 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 VolleyLog.d(TAG,"Error" + error.getMessage());
+                progressDialog.dismiss();
                 swipe.setRefreshing(false);
+                Toast.makeText(HistoryTransaksiActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
@@ -413,6 +408,13 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
                     Request.Method.POST, url_transaction, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
+
                     try {
                         Log.d("save", response.toString());
                         status = response.getString("status");
@@ -433,7 +435,8 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG,"Error"+ error.getMessage());
-                    Toast.makeText(HistoryTransaksiActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
+                    progressDialog.dismiss();
+                    Toast.makeText(HistoryTransaksiActivity.this, "Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
                 }
             }){
                 @Override
@@ -463,6 +466,13 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
                     Request.Method.PUT, url_transaction+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
+
                     try {
                         Log.d("update", response.toString());
                         status = response.getString("status");
@@ -483,7 +493,8 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG,"Error"+ error.getMessage());
-                    Toast.makeText(HistoryTransaksiActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                    progressDialog.dismiss();
+                    Toast.makeText(HistoryTransaksiActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
                 }
             }){
                 @Override
@@ -503,10 +514,18 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
     }
 
     private void edit(final String idx){
+        progressDialog = ProgressDialog.show(HistoryTransaksiActivity.this, "", "Please Wait.....", false);
         StringRequest strReq = new StringRequest(
                 Request.Method.GET, url_transaction+"/"+idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
+
                 Log.d(TAG,"Response:" + response.toString());
                 try{
                     JSONObject jObj = new JSONObject(response);
@@ -517,9 +536,9 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
                     String nameProductx = jObj.getString("product_name");
                     String qtyx = jObj.getString("total_product");
                     String totalx = jObj.getString("total_price");
-                    String datex = jObj.getString("created_at");
+//                    String datex = jObj.getString("created_at");
 
-                    DialogForm(idx, namex,nameProductx,qtyx,totalx,datex ,"UPDATE");
+                    DialogForm(idx, namex,nameProductx,qtyx,totalx,"UPDATE");
                     adapter.notifyDataSetChanged();
                 }catch (JSONException e){
                     e.printStackTrace();
@@ -529,18 +548,27 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(HistoryTransaksiActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(HistoryTransaksiActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
     private void delete(final String idx){
+        progressDialog = ProgressDialog.show(HistoryTransaksiActivity.this, "", "Please Wait.....", false);
         final StringRequest strReq = new StringRequest(
                 Request.Method.DELETE, url_transaction +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
+
                 try{
                     JSONObject jObj = new JSONObject(response);
                     status = jObj.getString("status");
@@ -560,7 +588,8 @@ public class HistoryTransaksiActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(HistoryTransaksiActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(HistoryTransaksiActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);

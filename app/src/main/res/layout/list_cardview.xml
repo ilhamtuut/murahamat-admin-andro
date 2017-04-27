@@ -27,7 +27,7 @@
                 android:layout_height="@dimen/album_cover_height"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:scaleType="fitXY"/>
+                android:scaleType="centerCrop"/>
             <TextView
                 android:id="@+id/title"
                 android:layout_width="match_parent"
@@ -37,7 +37,7 @@
                 android:paddingRight="@dimen/album_title_padding"
                 android:paddingTop="@dimen/album_title_padding"
                 android:text="Nama Brang"
-                android:textColor="@color/album_title"
+                android:textColor="@color/colorPrimary"
                 android:textSize="@dimen/album_title" />
             <TextView
                 android:id="@+id/count"

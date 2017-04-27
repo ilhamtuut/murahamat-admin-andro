@@ -1,18 +1,17 @@
 package wad.wan.murahamatdistro;
 
-import android.content.BroadcastReceiver;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
@@ -29,7 +28,6 @@ import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
@@ -38,7 +36,6 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.NetworkImageView;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import org.json.JSONArray;
@@ -46,23 +43,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import wad.wan.murahamatdistro.adapter.KategoriAdapter;
 import wad.wan.murahamatdistro.adapter.TestimonialAdapter;
 import wad.wan.murahamatdistro.app.AppController;
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.data.Category;
 import wad.wan.murahamatdistro.data.DataTestimonial;
-import wad.wan.murahamatdistro.url.Url;
 
 public class TestimonialActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener{
 
@@ -82,6 +72,8 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
     ImageLoader imageLoader = AppController.geInstance().getImageLoader();
     MaterialSearchView searchView;
     Bitmap bitmap;
+    String selectedPath1 = "NONE";
+    ProgressDialog progressDialog;
     int PICK_IMAGE_REQUEST = 1;
 
     private static final String TAG = TestimonialActivity.class.getSimpleName();
@@ -225,7 +217,7 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         text_id.setText(null);
         text_nama.setText(null);
         text_deskripsi.setText(null);
-        imageView.setImageResource(0);
+        imageView.setImageBitmap(null);
     }
 
     private void DialogForm(String idx, String namax, String gambarx,String deskripsix, String button){
@@ -267,8 +259,18 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                 id = text_id.getText().toString();
                 nama = text_nama.getText().toString();
                 deskripsi = text_deskripsi.getText().toString();
+                if(bitmap!=null && !nama.equals("") && !deskripsi.equals("")){
+                    progressDialog = ProgressDialog.show(TestimonialActivity.this, "", "Please Wait.....", false);
 
-                simpan_update();
+                    Thread thread=new Thread(new Runnable(){
+                        public void run(){
+                            simpan_update();
+                        }
+                    });
+                    thread.start();
+                }else{
+                    Toast.makeText(getApplicationContext(),"Please completed form fields.", Toast.LENGTH_SHORT).show();
+                }
                 dialog.dismiss();
                 kosong();
             }
@@ -289,12 +291,21 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
         itemList.clear();
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
+        progressDialog = ProgressDialog.show(TestimonialActivity.this, "", "Please Wait.....", false);
 
         JsonArrayRequest jArr = new JsonArrayRequest(url_testi, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
                 Log.d(TAG,response.toString());
+
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
+
 
                 for (int i=0; i<response.length(); i++){
                     try {
@@ -319,31 +330,42 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
             @Override
             public void onErrorResponse(VolleyError error){
                 VolleyLog.d(TAG,"Error" + error.getMessage());
+                progressDialog.dismiss();
                 swipe.setRefreshing(false);
+                Toast.makeText(TestimonialActivity.this, "Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
     }
 
     private void simpan_update(){
+
         if(id.isEmpty()){
-            RequestQueue queue= Volley.newRequestQueue(this);
+//            RequestQueue queue= Volley.newRequestQueue(this);
 
             Map<String, String> jsonParams = new HashMap<String, String>();
             jsonParams.put("name",nama);
             jsonParams.put("image",getStringImage(bitmap));
             jsonParams.put("testi",deskripsi);
+
             Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                     Request.Method.POST, url_testi, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
 
                     try {
                         Log.d("save", response.toString());
                         status = response.getString("status");
                         if(status.equals("ok")){
+
                             callVolley();
                             kosong();
                             Toast.makeText(TestimonialActivity.this, "Success saved testimonial",Toast.LENGTH_LONG).show();
@@ -361,7 +383,8 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG,"Error"+ error.getMessage());
-                    Toast.makeText(TestimonialActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                    progressDialog.dismiss();
+                    Toast.makeText(TestimonialActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
                 }
             }){
                 @Override
@@ -375,9 +398,11 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                     return "application/json";
                 }
             };
-            queue.add(jsonObjectRequest);
+//            queue.add(jsonObjectRequest);
+            RequestHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
         }else {
-            RequestQueue queue= Volley.newRequestQueue(this);
+//            RequestQueue queue= Volley.newRequestQueue(this);
+//            progressDialog = ProgressDialog.show(TestimonialActivity.this, "", "Please Wait.....", false);
 
             Map<String, String> jsonParams = new HashMap<String, String>();
             jsonParams.put("name",nama);
@@ -388,12 +413,22 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                     Request.Method.PUT, url_testi+"/"+id, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
+
                     try {
                         Log.d("update", response.toString());
                         status = response.getString("status");
                         if(status.equals("ok")){
+
                             callVolley();
                             kosong();
+
                             Toast.makeText(TestimonialActivity.this, "Success update testimonial",Toast.LENGTH_LONG).show();
                             adapter.notifyDataSetChanged();
 
@@ -408,7 +443,8 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG,"Error"+ error.getMessage());
-                    Toast.makeText(TestimonialActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                    progressDialog.dismiss();
+                    Toast.makeText(TestimonialActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
                 }
             }){
                 @Override
@@ -422,16 +458,26 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
                     return "application/json";
                 }
             };
-            queue.add(jsonObjectRequest);
+//            queue.add(jsonObjectRequest);
+            RequestHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
         }
     }
 
     private void edit(final String idx){
+        progressDialog = ProgressDialog.show(TestimonialActivity.this, "", "Please Wait.....", false);
         StringRequest strReq = new StringRequest(
                 Request.Method.GET, url_testi+"/"+idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
+
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
+
                 try{
                     JSONObject jObj = new JSONObject(response);
 
@@ -451,24 +497,33 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(TestimonialActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(TestimonialActivity.this, "Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
     private void delete(final String idx){
+        progressDialog = ProgressDialog.show(TestimonialActivity.this, "", "Please Wait.....", false);
         StringRequest strReq = new StringRequest(
                 Request.Method.DELETE, url_testi +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
+
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
+
                 try{
                     JSONObject jObj = new JSONObject(response);
                     status = jObj.getString("status");
                     if(status.equals("ok")){
                         callVolley();
-                        kosong();
                         Toast.makeText(TestimonialActivity.this, "Success delete testimonial",Toast.LENGTH_LONG).show();
                         adapter.notifyDataSetChanged();
 
@@ -484,7 +539,8 @@ public class TestimonialActivity extends AppCompatActivity implements SwipeRefre
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(TestimonialActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(TestimonialActivity.this, "Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);

@@ -1,16 +1,17 @@
 package wad.wan.murahamatdistro;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -49,9 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 import wad.wan.murahamatdistro.adapter.PromosAdapter;
-import wad.wan.murahamatdistro.adapter.SearchAdapte;
 import wad.wan.murahamatdistro.app.RequestHandler;
-import wad.wan.murahamatdistro.data.Products;
 import wad.wan.murahamatdistro.data.Promo;
 
 public class PromoActivity extends AppCompatActivity {
@@ -69,6 +68,7 @@ public class PromoActivity extends AppCompatActivity {
     Button buttonChooseImage;
     ImageView imageView;
     Bitmap bitmap;
+    ProgressDialog progressDialog;
     MaterialSearchView searchView;
     int PICK_IMAGE_REQUEST = 1;
 
@@ -178,7 +178,7 @@ public class PromoActivity extends AppCompatActivity {
     private void kosong(){
         namaPromo.setText(null);
         description.setText(null);
-        imageView.setImageResource(0);
+        imageView.setImageBitmap(null);
     }
 
     private void DialogForm(String idx, String namax, String promox,String deskripsix,String button){
@@ -206,8 +206,18 @@ public class PromoActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which){
                 namaPromos = namaPromo.getText().toString();
                 descriptions = description.getText().toString();
+                if(bitmap!=null && !namaPromos.equals("") && !descriptions.equals("")){
+                    progressDialog = ProgressDialog.show(PromoActivity.this, "", "Please Wait.....", false);
+                    Thread thread=new Thread(new Runnable(){
+                        public void run(){
+                            save();
+                        }
+                    });
+                    thread.start();
+                }else{
+                    Toast.makeText(getApplicationContext(),"Please complete fields.", Toast.LENGTH_SHORT).show();
+                }
 
-                save();
                 dialog.dismiss();
                 kosong();
             }
@@ -228,12 +238,19 @@ public class PromoActivity extends AppCompatActivity {
         itemList.clear();
         adapter.notifyDataSetChanged();
         swipe.setRefreshing(true);
+        progressDialog = ProgressDialog.show(PromoActivity.this, "", "Please Wait.....", false);
 
         JsonArrayRequest jArr = new JsonArrayRequest(url_promo, new Response.Listener<JSONArray>(){
 
             @Override
             public void onResponse(JSONArray response){
                 Log.d(TAG,response.toString());
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
 
                 for (int i=0; i<response.length(); i++){
                     try {
@@ -260,7 +277,9 @@ public class PromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 VolleyLog.d(TAG,"Error" + error.getMessage());
+                progressDialog.dismiss();
                 swipe.setRefreshing(false);
+                Toast.makeText(PromoActivity.this,"Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(jArr);
@@ -279,8 +298,14 @@ public class PromoActivity extends AppCompatActivity {
                 Request.Method.POST, url_promo, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
                 try {
-                    Log.d("update", response.toString());
+                    Log.d("save", response.toString());
                     status = response.getString("status");
                     if(status.equals("ok")){
                         callVolley();
@@ -300,7 +325,8 @@ public class PromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG,"Error "+ error.getMessage());
-                Toast.makeText(PromoActivity.this, "Failed connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(PromoActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
@@ -314,16 +340,24 @@ public class PromoActivity extends AppCompatActivity {
                 return "application/json";
             }
         };
-        queue.add(jsonObjectRequest);
+        RequestHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
 
 
     public void delete(final String idx){
+        progressDialog = ProgressDialog.show(PromoActivity.this, "", "Please Wait.....", false);
+
         StringRequest strReq = new StringRequest(
                 Request.Method.DELETE, url_promo +"/"+ idx, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG,"Response:" + response.toString());
+                runOnUiThread(new Runnable(){
+                    public void run() {
+                        if(progressDialog.isShowing())
+                            progressDialog.dismiss();
+                    }
+                });
                 try{
                     JSONObject jObj = new JSONObject(response);
                     status = jObj.getString("status");
@@ -343,23 +377,20 @@ public class PromoActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error){
                 Log.e(TAG,"Error" + error.getMessage());
-                Toast.makeText(PromoActivity.this, "Failed Connect to server",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(PromoActivity.this, "Plese try again, Failed Connect to server",Toast.LENGTH_LONG).show();
             }
         });
         RequestHandler.getInstance(this).addToRequestQueue(strReq);
     }
 
     public String getStringImage (Bitmap bmp){
-        if(bitmap!=null){
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-            byte[] imageBytes = baos.toByteArray();
-            String encodedIMage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-            return encodedIMage;
-        }else{
-            String img = "";
-            return img;
-        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedIMage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedIMage;
     }
 
     private void showFileChooser(){
@@ -384,7 +415,6 @@ public class PromoActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }else {
-                bitmap=null;
                 Toast.makeText(this, "No Image is selected.", Toast.LENGTH_LONG).show();
             }
         }

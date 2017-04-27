@@ -6,11 +6,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
@@ -25,13 +25,11 @@ import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,16 +46,24 @@ import wad.wan.murahamatdistro.app.RequestHandler;
 import wad.wan.murahamatdistro.data.Category;
 
 public class InputBarangActivity extends AppCompatActivity {
-    EditText text_nama_brg,text_harga1,text_harga2,text_harga3,text_harga4,text_harga5,text_harga6,text_ukuran,text_stock,text_merek,text_deskripsi,text_kategori;
+    EditText text_nama_brg,text_harga1,text_harga2,text_harga3,text_harga4,text_harga5,text_harga6,
+            text_ukuran,text_stock,text_merek,text_deskripsi,text_kategori,kategori;
     String nama_brg,ukuran,harga1,harga2,harga3,harga4,harga5,harga6,id_kategori,merek,stock,deskripsi;
     Button btn_simpan;
     private ProgressDialog progressDialog;
     Spinner spinner;
     ImageView imageView1,imageView2,imageView3,imageView4,imageView5,imageView6;
-    Bitmap bitmap;
+    Bitmap bitmap1,bitmap2,bitmap3,bitmap4,bitmap5,bitmap6;
     String status;
-    int PICK_IMAGE_REQUEST = 1;
+
     private static final int MY_PERMISSIONS_REQUEST_READ_MEDIA = 1111;
+    private static final int SELECT_FILE1 = 1;
+    private static final int SELECT_FILE2 = 2;
+    private static final int SELECT_FILE3 = 3;
+    private static final int SELECT_FILE4 = 4;
+    private static final int SELECT_FILE5 = 5;
+    private static final int SELECT_FILE6 = 6;
+
     private static String url_insert = "http://192.168.43.174/mrmht/public/api/product";
     private static String url_kategori = "http://192.168.43.174/mrmht/public/api/category";
 
@@ -77,6 +83,7 @@ public class InputBarangActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Please wait...");
 
+        kategori = (EditText) findViewById(R.id.kategori);
         text_nama_brg = (EditText) findViewById(R.id.edittext_namaBarang);
         text_kategori = (EditText) findViewById(R.id.edittext_kategori);
         text_ukuran = (EditText) findViewById(R.id.edittext_ukuran);
@@ -96,52 +103,47 @@ public class InputBarangActivity extends AppCompatActivity {
         imageView5 = (ImageView) findViewById(R.id.imageView5);
         imageView6 = (ImageView) findViewById(R.id.imageView6);
 
-        imageView2.setVisibility(View.GONE);
-        imageView3.setVisibility(View.GONE);
-        imageView4.setVisibility(View.GONE);
-        imageView5.setVisibility(View.GONE);
-        imageView6.setVisibility(View.GONE);
-
         cekPermission();
+
         imageView1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFileChooser();
+                showFileChooser(SELECT_FILE1);
             }
         });
 
         imageView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFileChooser();
+                showFileChooser(SELECT_FILE2);
             }
         });
 
         imageView3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFileChooser();
+                showFileChooser(SELECT_FILE3);
             }
         });
 
         imageView4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFileChooser();
+                showFileChooser(SELECT_FILE4);
             }
         });
 
-        imageView4.setOnClickListener(new View.OnClickListener() {
+        imageView5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFileChooser();
+                showFileChooser(SELECT_FILE5);
             }
         });
 
         imageView6.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFileChooser();
+                showFileChooser(SELECT_FILE6);
             }
         });
 
@@ -149,7 +151,32 @@ public class InputBarangActivity extends AppCompatActivity {
         btn_simpan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                save();
+                nama_brg = text_nama_brg.getText().toString();
+                deskripsi = text_deskripsi.getText().toString();
+                merek = text_merek.getText().toString();
+                ukuran = text_ukuran.getText().toString();
+                stock = text_stock.getText().toString();
+                harga1 = text_harga1.getText().toString();
+                harga2 = text_harga2.getText().toString();
+                harga3 = text_harga3.getText().toString();
+                harga4 = text_harga4.getText().toString();
+                harga5 = text_harga5.getText().toString();
+                harga6 = text_harga6.getText().toString();
+
+                if(bitmap1!=null && !nama_brg.equals("") && !deskripsi.equals("")&& !merek.equals("") && !ukuran.equals("")
+                        && !stock.equals("") && !harga1.equals("")&& !harga2.equals("") && !harga3.equals("")
+                        && !harga4.equals("") && !harga5.equals("")&& !harga6.equals("")){
+                    progressDialog.show();
+                    Thread thread=new Thread(new Runnable(){
+                        public void run(){
+                            save();
+                        }
+                    });
+                    thread.start();
+                }else{
+                    Toast.makeText(getApplicationContext(),"Please completed form fields.", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
 
@@ -159,43 +186,17 @@ public class InputBarangActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 text_kategori.setText(listKategori.get(position).getId());
+                kategori.setText(listKategori.get(position).getName());
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 text_kategori.setText(null);
+                kategori.setText(null);
             }
         });
         callKategori();
     }
-
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if(resultCode == RESULT_OK){
-//            if(requestCode == GALLERY_REQUEST){
-//                galleryPhoto.setPhotoUri(data.getData());
-//                String photoPath = galleryPhoto.getPath();
-//                Log.d(TAG, photoPath);
-//                try {
-//                    Bitmap bitmap = PhotoLoader.init().from(photoPath).requestSize(512,512).getBitmap();
-//                    ImageView imageView = new ImageView(getApplicationContext());
-//                    LinearLayout.LayoutParams layoutParams =
-//                            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-//                                    ViewGroup.LayoutParams.MATCH_PARENT);
-//                    imageView.setLayoutParams(layoutParams);
-//                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-//                    imageView.setPadding(0,0,0,0);
-//                    imageView.setAdjustViewBounds(true);
-//                    imageView.setImageBitmap(bitmap);
-//                    linearMain.addView(imageView);
-//
-//                } catch (FileNotFoundException e) {
-//                    Toast.makeText(getApplicationContext(),"Error while loading image",Toast.LENGTH_LONG).show();
-//                }
-//            }
-//        }
-//    }
-
 
     private void callKategori(){
 
@@ -233,8 +234,6 @@ public class InputBarangActivity extends AppCompatActivity {
     }
 
     private void save(){
-        RequestQueue queue= Volley.newRequestQueue(this);
-        progressDialog.show();
         nama_brg = text_nama_brg.getText().toString();
         deskripsi = text_deskripsi.getText().toString();
         merek = text_merek.getText().toString();
@@ -247,7 +246,6 @@ public class InputBarangActivity extends AppCompatActivity {
         harga5 = text_harga5.getText().toString();
         harga6 = text_harga6.getText().toString();
         id_kategori = text_kategori.getText().toString();
-//        deskripsi = text_deskripsi.getText().toString();
 
         Map<String, String> jsonParams = new HashMap<String, String>();
         jsonParams.put("name",nama_brg);
@@ -262,8 +260,12 @@ public class InputBarangActivity extends AppCompatActivity {
         jsonParams.put("price5",harga5);
         jsonParams.put("price6",harga6);
         jsonParams.put("category_id",id_kategori);
-        jsonParams.put("image1",getStringImage(bitmap));
+        jsonParams.put("image1",getStringImage(bitmap1));
+//        jsonParams.put("image2",getStringImage(bitmap2));
+
         Log.d(TAG,"Json:"+ new JSONObject(jsonParams));
+//        Log.d(TAG,"image1:"+ getStringImage(bitmap1));
+//        Log.d(TAG,"image2:"+ getStringImage(bitmap2));
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.POST, url_insert, new JSONObject(jsonParams), new Response.Listener<JSONObject>() {
@@ -292,8 +294,8 @@ public class InputBarangActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG,"Error"+ error.getMessage());
-                progressDialog.hide();
-                Toast.makeText(InputBarangActivity.this, error.getMessage(),Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+                Toast.makeText(InputBarangActivity.this, "Plese try again, Failed connect to server",Toast.LENGTH_LONG).show();
             }
         }){
             @Override
@@ -307,8 +309,7 @@ public class InputBarangActivity extends AppCompatActivity {
                 return "application/json";
             }
         };
-        queue.add(jsonObjectRequest);
-
+        RequestHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
 
     private void kosong(){
@@ -324,7 +325,12 @@ public class InputBarangActivity extends AppCompatActivity {
         text_merek.setText(null);
         text_deskripsi.setText(null);
         text_stock.setText(null);
-        imageView1.setImageResource(0);
+        imageView1.setImageBitmap(null);
+        imageView2.setImageBitmap(null);
+        imageView3.setImageBitmap(null);
+        imageView4.setImageBitmap(null);
+        imageView5.setImageBitmap(null);
+        imageView6.setImageBitmap(null);
     }
 
     @Override
@@ -342,37 +348,41 @@ public class InputBarangActivity extends AppCompatActivity {
         return encodedIMage;
     }
 
-    private void showFileChooser(){
+    private void showFileChooser(int req_code){
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent,"Select Picture"), PICK_IMAGE_REQUEST);
+        startActivityForResult(Intent.createChooser(intent,"Select Picture"), req_code);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null){
+        if(resultCode == RESULT_OK && data != null && data.getData() != null){
             Uri filePatch = data.getData();
             try {
-                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
 
-                if(bitmap!=null){
-                        imageView1.setImageBitmap(bitmap);
-
-//                        imageView2.setImageBitmap(bitmap);
-//
-//                        imageView3.setImageBitmap(bitmap);
-//
-//                        imageView4.setImageBitmap(bitmap);
-//
-//                        imageView5.setImageBitmap(bitmap);
-//
-//                        imageView6.setImageBitmap(bitmap);
-                }else {
-                    bitmap=null;
+                if (requestCode == SELECT_FILE1) {
+                    bitmap1 = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView1.setImageBitmap(bitmap1);
+                }else if (requestCode == SELECT_FILE2) {
+                    bitmap2 = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView2.setImageBitmap(bitmap2);
+                }else if (requestCode == SELECT_FILE3) {
+                    bitmap3 = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView3.setImageBitmap(bitmap3);
+                }else if (requestCode == SELECT_FILE4) {
+                    bitmap4 = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView4.setImageBitmap(bitmap4);
+                }else if (requestCode == SELECT_FILE5) {
+                    bitmap5 = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView5.setImageBitmap(bitmap5);
+                }else if (requestCode == SELECT_FILE6) {
+                    bitmap6 = MediaStore.Images.Media.getBitmap(getContentResolver(), filePatch);
+                    imageView6.setImageBitmap(bitmap6);
                 }
+
             }catch (IOException e){
                 e.printStackTrace();
             }
@@ -388,22 +398,10 @@ public class InputBarangActivity extends AppCompatActivity {
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.READ_EXTERNAL_STORAGE)) {
-
-                // Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
             } else {
-
-                // No explanation needed, we can request the permission.
-
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         MY_PERMISSIONS_REQUEST_READ_MEDIA);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
             }
         }
 
@@ -418,8 +416,6 @@ public class InputBarangActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                 }
                 return;
             }
